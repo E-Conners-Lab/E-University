@@ -1,0 +1,241 @@
+devices:
+  EUNIV-CORE1:
+    connections:
+      cli:
+        ip: 192.168.68.200
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-CORE2:
+    connections:
+      cli:
+        ip: 192.168.68.202
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-CORE3:
+    connections:
+      cli:
+        ip: 192.168.68.203
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-CORE4:
+    connections:
+      cli:
+        ip: 192.168.68.204
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-CORE5:
+    connections:
+      cli:
+        ip: 192.168.68.205
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-INET-GW1:
+    connections:
+      cli:
+        ip: 192.168.68.206
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-INET-GW2:
+    connections:
+      cli:
+        ip: 192.168.68.207
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-MAIN-AGG1:
+    connections:
+      cli:
+        ip: 192.168.68.208
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-MAIN-PE1:
+    connections:
+      cli:
+        ip: 192.168.68.209
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-MAIN-PE2:
+    connections:
+      cli:
+        ip: 192.168.68.210
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-MED-AGG1:
+    connections:
+      cli:
+        ip: 192.168.68.211
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-MED-PE1:
+    connections:
+      cli:
+        ip: 192.168.68.212
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-MED-PE2:
+    connections:
+      cli:
+        ip: 192.168.68.213
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-RES-AGG1:
+    connections:
+      cli:
+        ip: 192.168.68.214
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-RES-PE1:
+    connections:
+      cli:
+        ip: 192.168.68.215
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
+  EUNIV-RES-PE2:
+    connections:
+      cli:
+        ip: 192.168.68.216
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: Pass2885!
+        username: admin
+      enable:
+        password: Pass2885!
+    os: iosxe
+    type: router
