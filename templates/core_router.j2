@@ -1,0 +1,141 @@
+!
+! =====================================================================
+! {{ hostname }} - Generated Configuration
+! Role: {{ role }}
+! Generated: {{ timestamp }}
+! Source: NetBox + Jinja2 Template
+! =====================================================================
+!
+hostname {{ hostname }}
+!
+! --- Base Services ---
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+!
+! --- Credentials ---
+enable secret {{ enable_secret }}
+username {{ username }} privilege 15 secret {{ password }}
+!
+! --- Logging ---
+logging buffered 65536 informational
+logging console informational
+!
+! --- DNS & Domain ---
+ip domain name {{ domain_name }}
+ip name-server {{ dns_servers | join(' ') }}
+!
+! --- SSH ---
+ip ssh version 2
+!
+! --- NTP ---
+{% for ntp_server in ntp_servers %}
+ntp server {{ ntp_server }}
+{% endfor %}
+!
+! --- SNMP ---
+snmp-server community {{ snmp_community }} RO
+snmp-server location {{ snmp_location }}
+snmp-server contact {{ snmp_contact }}
+!
+! --- Loopback Interface ---
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address {{ loopback_ip }} 255.255.255.255
+ ip ospf 1 area 0
+ no shutdown
+!
+! --- Management Interface ---
+interface GigabitEthernet1
+ description Management
+ ip address {{ mgmt_ip }} {{ mgmt_mask }}
+ no shutdown
+!
+! --- Core Interfaces ---
+{% for intf in interfaces %}
+interface {{ intf.name }}
+ description {{ intf.description }}
+ ip address {{ intf.ip }} {{ intf.mask }}
+ ip ospf 1 area 0
+ ip ospf network point-to-point
+ mpls ip
+ no shutdown
+!
+{% endfor %}
+! =====================================================================
+! OSPF CONFIGURATION
+! =====================================================================
+!
+router ospf 1
+ router-id {{ loopback_ip }}
+ auto-cost reference-bandwidth 100000
+ passive-interface Loopback0
+ passive-interface GigabitEthernet1
+ log-adjacency-changes detail
+!
+! =====================================================================
+! MPLS CONFIGURATION
+! =====================================================================
+!
+mpls ldp router-id Loopback0 force
+!
+! =====================================================================
+! BGP CONFIGURATION
+! =====================================================================
+!
+router bgp {{ bgp_asn }}
+ bgp router-id {{ loopback_ip }}
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+{% if rr_cluster_id %}
+ bgp cluster-id {{ rr_cluster_id }}
+{% endif %}
+!
+{% for neighbor in bgp_neighbors %}
+ neighbor {{ neighbor.ip }} remote-as {{ neighbor.remote_as }}
+ neighbor {{ neighbor.ip }} update-source Loopback0
+ neighbor {{ neighbor.ip }} description {{ neighbor.description }}
+{% endfor %}
+!
+ address-family ipv4
+{% for neighbor in bgp_neighbors %}
+  neighbor {{ neighbor.ip }} activate
+  neighbor {{ neighbor.ip }} send-community both
+{% if is_route_reflector %}
+  neighbor {{ neighbor.ip }} route-reflector-client
+{% endif %}
+{% endfor %}
+ exit-address-family
+!
+ address-family vpnv4
+{% for neighbor in bgp_neighbors %}
+  neighbor {{ neighbor.ip }} activate
+  neighbor {{ neighbor.ip }} send-community extended
+{% if is_route_reflector %}
+  neighbor {{ neighbor.ip }} route-reflector-client
+{% endif %}
+{% endfor %}
+ exit-address-family
+!
+! =====================================================================
+! SECURITY
+! =====================================================================
+!
+ip access-list standard VTY-ACCESS
+ permit 10.0.0.0 0.255.255.255
+ permit 192.168.68.0 0.0.3.255
+ deny any log
+!
+line con 0
+ logging synchronous
+ exec-timeout 30 0
+line vty 0 15
+ access-class VTY-ACCESS in
+ login local
+ transport input ssh
+ exec-timeout 30 0
+!
+! --- Default Route ---
+ip route 0.0.0.0 0.0.0.0 {{ default_gateway }}
+!
+end

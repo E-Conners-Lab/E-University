@@ -1,0 +1,26 @@
+# E University Network Lab - Python Requirements
+
+# pyATS and Genie
+pyats[full]>=24.0
+genie>=24.0
+
+# NetBox integration
+pynetbox>=7.0.0
+
+# Template rendering
+Jinja2>=3.0.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# Data handling
+PyYAML>=6.0
+pydantic>=2.0.0
+
+# Optional: For enhanced testing
+pytest>=7.0.0
+pytest-html>=4.0.0
+
+# Optional: For network visualization
+netmiko>=4.0.0
+napalm>=4.0.0
