@@ -52,7 +52,7 @@ This document defines the network architecture for E-University, a multi-campus 
 - **BGP** - iBGP with Route Reflectors for overlay
 - **MPLS** - Label switching for traffic engineering
 - **L3VPN** - VRF-based customer segmentation
-- **BFD** - Fast failure detection (future)
+- **BFD** - Fast failure detection (150ms) on OSPF and BGP interfaces
 
 ---
 
@@ -80,10 +80,14 @@ This document defines the network architecture for E-University, a multi-campus 
 └─────────────────────────────────┬───────────────────────────────────────────┘
                                   │
 ┌─────────────────────────────────┴───────────────────────────────────────────┐
-│                              PE/BNG LAYER                                   │
-│      MAIN-PE1  MAIN-PE2    MED-PE1  MED-PE2     RES-PE1  RES-PE2           │
+│                              EDGE LAYER                                     │
+│    MAIN-EDGE1 MAIN-EDGE2  MED-EDGE1 MED-EDGE2   RES-EDGE1 RES-EDGE2        │
 │         └────────┘            └────────┘           └────────┘               │
 │          (HA Pair)             (HA Pair)            (HA Pair)               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                              HOST LAYER                                     │
+│       HOST1    HOST2       HOST3    HOST4        HOST5    HOST6            │
+│      (Student)(Staff)    (Student)(Staff)      (Student)(Staff)            │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -94,7 +98,8 @@ This document defines the network architecture for E-University, a multi-campus 
 | **Internet Edge** | INET-GW1, INET-GW2 | External connectivity, DDoS protection |
 | **Core** | CORE1-5 | High-speed backbone, Route Reflection |
 | **Aggregation** | AGG1 (per campus) | Campus uplink aggregation |
-| **PE/BNG** | PE1, PE2 (per campus) | Customer VRF termination, services |
+| **Edge** | EDGE1, EDGE2 (per campus) | Customer VRF termination, services |
+| **Host** | HOST1-6 | End-user traffic generation |
 
 ---
 
@@ -111,15 +116,15 @@ This document defines the network architecture for E-University, a multi-campus 
 | EUNIV-CORE5 | Core / Route Reflector | 10.255.0.5 | 192.168.68.205 | 65000 | CSR1000V |
 | EUNIV-INET-GW1 | Internet Gateway | 10.255.0.101 | 192.168.68.206 | 65000 | CSR1000V |
 | EUNIV-INET-GW2 | Internet Gateway | 10.255.0.102 | 192.168.68.207 | 65000 | CSR1000V |
-| EUNIV-MAIN-AGG1 | Main Campus Aggregation | 10.255.1.1 | 192.168.68.208 | 65000 | CSR1000V |
-| EUNIV-MAIN-PE1 | Main Campus PE/BNG | 10.255.1.11 | 192.168.68.209 | 65000 | CSR1000V |
-| EUNIV-MAIN-PE2 | Main Campus PE/BNG | 10.255.1.12 | 192.168.68.210 | 65000 | CSR1000V |
-| EUNIV-MED-AGG1 | Medical Campus Aggregation | 10.255.2.1 | 192.168.68.211 | 65000 | CSR1000V |
-| EUNIV-MED-PE1 | Medical Campus PE/BNG | 10.255.2.11 | 192.168.68.212 | 65000 | CSR1000V |
-| EUNIV-MED-PE2 | Medical Campus PE/BNG | 10.255.2.12 | 192.168.68.213 | 65000 | CSR1000V |
+| EUNIV-MAIN-AGG1 | Main Campus Aggregation | 10.255.1.1 | 192.168.68.211 | 65000 | CSR1000V |
+| EUNIV-MAIN-EDGE1 | Main Campus Edge | 10.255.1.11 | 192.168.68.209 | 65000 | CSR1000V |
+| EUNIV-MAIN-EDGE2 | Main Campus Edge | 10.255.1.12 | 192.168.68.210 | 65000 | CSR1000V |
+| EUNIV-MED-AGG1 | Medical Campus Aggregation | 10.255.2.1 | 192.168.68.208 | 65000 | CSR1000V |
+| EUNIV-MED-EDGE1 | Medical Campus Edge | 10.255.2.11 | 192.168.68.212 | 65000 | CSR1000V |
+| EUNIV-MED-EDGE2 | Medical Campus Edge | 10.255.2.12 | 192.168.68.213 | 65000 | CSR1000V |
 | EUNIV-RES-AGG1 | Research Campus Aggregation | 10.255.3.1 | 192.168.68.214 | 65000 | CSR1000V |
-| EUNIV-RES-PE1 | Research Campus PE/BNG | 10.255.3.11 | 192.168.68.215 | 65000 | CSR1000V |
-| EUNIV-RES-PE2 | Research Campus PE/BNG | 10.255.3.12 | 192.168.68.216 | 65000 | CSR1000V |
+| EUNIV-RES-EDGE1 | Research Campus Edge | 10.255.3.11 | 192.168.68.215 | 65000 | CSR1000V |
+| EUNIV-RES-EDGE2 | Research Campus Edge | 10.255.3.12 | 192.168.68.216 | 65000 | CSR1000V |
 
 ### 3.2 Device Counts by Role
 
@@ -128,8 +133,9 @@ This document defines the network architecture for E-University, a multi-campus 
 | Core Routers | 5 |
 | Internet Gateways | 2 |
 | Aggregation Routers | 3 |
-| PE/BNG Routers | 6 |
-| **Total** | **16** |
+| Edge Routers | 6 |
+| Host Devices | 6 |
+| **Total** | **22** |
 
 ---
 
@@ -177,9 +183,9 @@ This document defines the network architecture for E-University, a multi-campus 
 |-------|----------|--------|----------|--------|--------|
 | 8 | EUNIV-CORE1 | Gi5 | EUNIV-MAIN-AGG1 | Gi2 | 10.0.1.0/30 |
 | 9 | EUNIV-CORE2 | Gi5 | EUNIV-MAIN-AGG1 | Gi3 | 10.0.1.4/30 |
-| 10 | EUNIV-MAIN-AGG1 | Gi4 | EUNIV-MAIN-PE1 | Gi2 | 10.0.1.8/30 |
-| 11 | EUNIV-MAIN-AGG1 | Gi5 | EUNIV-MAIN-PE2 | Gi2 | 10.0.1.12/30 |
-| 12 | EUNIV-MAIN-PE1 | Gi3 | EUNIV-MAIN-PE2 | Gi3 | 10.0.1.16/30 |
+| 10 | EUNIV-MAIN-AGG1 | Gi4 | EUNIV-MAIN-EDGE1 | Gi2 | 10.0.1.8/30 |
+| 11 | EUNIV-MAIN-AGG1 | Gi5 | EUNIV-MAIN-EDGE2 | Gi2 | 10.0.1.12/30 |
+| 12 | EUNIV-MAIN-EDGE1 | Gi3 | EUNIV-MAIN-EDGE2 | Gi3 | 10.0.1.16/30 |
 
 #### Medical Campus Links
 
@@ -187,9 +193,9 @@ This document defines the network architecture for E-University, a multi-campus 
 |-------|----------|--------|----------|--------|--------|
 | 13 | EUNIV-CORE2 | Gi6 | EUNIV-MED-AGG1 | Gi2 | 10.0.2.0/30 |
 | 14 | EUNIV-CORE3 | Gi4 | EUNIV-MED-AGG1 | Gi3 | 10.0.2.4/30 |
-| 15 | EUNIV-MED-AGG1 | Gi4 | EUNIV-MED-PE1 | Gi2 | 10.0.2.8/30 |
-| 16 | EUNIV-MED-AGG1 | Gi5 | EUNIV-MED-PE2 | Gi2 | 10.0.2.12/30 |
-| 17 | EUNIV-MED-PE1 | Gi3 | EUNIV-MED-PE2 | Gi3 | 10.0.2.16/30 |
+| 15 | EUNIV-MED-AGG1 | Gi4 | EUNIV-MED-EDGE1 | Gi2 | 10.0.2.8/30 |
+| 16 | EUNIV-MED-AGG1 | Gi5 | EUNIV-MED-EDGE2 | Gi2 | 10.0.2.12/30 |
+| 17 | EUNIV-MED-EDGE1 | Gi3 | EUNIV-MED-EDGE2 | Gi3 | 10.0.2.16/30 |
 
 #### Research Campus Links
 
@@ -197,11 +203,22 @@ This document defines the network architecture for E-University, a multi-campus 
 |-------|----------|--------|----------|--------|--------|
 | 18 | EUNIV-CORE4 | Gi4 | EUNIV-RES-AGG1 | Gi2 | 10.0.3.0/30 |
 | 19 | EUNIV-CORE5 | Gi4 | EUNIV-RES-AGG1 | Gi3 | 10.0.3.4/30 |
-| 20 | EUNIV-RES-AGG1 | Gi4 | EUNIV-RES-PE1 | Gi2 | 10.0.3.8/30 |
-| 21 | EUNIV-RES-AGG1 | Gi5 | EUNIV-RES-PE2 | Gi2 | 10.0.3.12/30 |
-| 22 | EUNIV-RES-PE1 | Gi3 | EUNIV-RES-PE2 | Gi3 | 10.0.3.16/30 |
+| 20 | EUNIV-RES-AGG1 | Gi4 | EUNIV-RES-EDGE1 | Gi2 | 10.0.3.8/30 |
+| 21 | EUNIV-RES-AGG1 | Gi5 | EUNIV-RES-EDGE2 | Gi2 | 10.0.3.12/30 |
+| 22 | EUNIV-RES-EDGE1 | Gi3 | EUNIV-RES-EDGE2 | Gi3 | 10.0.3.16/30 |
 
-**Total Physical Links: 22**
+#### Host Links
+
+| Cable | Device A | Port A | Device B | Port B | Subnet |
+|-------|----------|--------|----------|--------|--------|
+| 23 | EUNIV-MAIN-EDGE1 | Gi6 | HOST1-STUDENT | eth0 | 172.16.1.0/24 |
+| 24 | EUNIV-MAIN-EDGE2 | Gi6 | HOST2-STAFF | eth0 | 172.16.2.0/24 |
+| 25 | EUNIV-MED-EDGE1 | Gi6 | HOST3-STUDENT | eth0 | 172.17.1.0/24 |
+| 26 | EUNIV-MED-EDGE2 | Gi6 | HOST4-STAFF | eth0 | 172.17.2.0/24 |
+| 27 | EUNIV-RES-EDGE1 | Gi6 | HOST5-STUDENT | eth0 | 172.18.1.0/24 |
+| 28 | EUNIV-RES-EDGE2 | Gi6 | HOST6-STAFF | eth0 | 172.18.2.0/24 |
+
+**Total Physical Links: 28**
 
 ---
 
@@ -248,14 +265,14 @@ This document defines the network architecture for E-University, a multi-campus 
 | EUNIV-INET-GW1 | 192.168.68.206/22 |
 | EUNIV-INET-GW2 | 192.168.68.207/22 |
 | EUNIV-MAIN-AGG1 | 192.168.68.208/22 |
-| EUNIV-MAIN-PE1 | 192.168.68.209/22 |
-| EUNIV-MAIN-PE2 | 192.168.68.210/22 |
+| EUNIV-MAIN-EDGE1 | 192.168.68.209/22 |
+| EUNIV-MAIN-EDGE2 | 192.168.68.210/22 |
 | EUNIV-MED-AGG1 | 192.168.68.211/22 |
-| EUNIV-MED-PE1 | 192.168.68.212/22 |
-| EUNIV-MED-PE2 | 192.168.68.213/22 |
+| EUNIV-MED-EDGE1 | 192.168.68.212/22 |
+| EUNIV-MED-EDGE2 | 192.168.68.213/22 |
 | EUNIV-RES-AGG1 | 192.168.68.214/22 |
-| EUNIV-RES-PE1 | 192.168.68.215/22 |
-| EUNIV-RES-PE2 | 192.168.68.216/22 |
+| EUNIV-RES-EDGE1 | 192.168.68.215/22 |
+| EUNIV-RES-EDGE2 | 192.168.68.216/22 |
 
 ---
 
@@ -313,7 +330,7 @@ This document defines the network architecture for E-University, a multi-campus 
                     │  CORE3, CORE4 (P Routers)          │
                     │  INET-GW1, INET-GW2                 │
                     │  MAIN-AGG1, MED-AGG1, RES-AGG1     │
-                    │  All PE Routers                     │
+                    │  All Edge Routers                   │
                     └─────────────────────────────────────┘
 ```
 
@@ -333,15 +350,15 @@ This document defines the network architecture for E-University, a multi-campus 
 | CORE5 (RR) | CORE1, CORE2, CORE3, CORE4, RES-AGG1 |
 | INET-GW1 | CORE1, CORE2 |
 | INET-GW2 | CORE1, CORE2 |
-| MAIN-AGG1 | CORE1, CORE2, MAIN-PE1, MAIN-PE2 |
-| MAIN-PE1 | MAIN-AGG1 |
-| MAIN-PE2 | MAIN-AGG1 |
-| MED-AGG1 | CORE1, CORE2, MED-PE1, MED-PE2 |
-| MED-PE1 | MED-AGG1 |
-| MED-PE2 | MED-AGG1 |
-| RES-AGG1 | CORE1, CORE5, RES-PE1, RES-PE2 |
-| RES-PE1 | RES-AGG1 |
-| RES-PE2 | RES-AGG1 |
+| MAIN-AGG1 | CORE1, CORE2, MAIN-EDGE1, MAIN-EDGE2 |
+| MAIN-EDGE1 | MAIN-AGG1 |
+| MAIN-EDGE2 | MAIN-AGG1 |
+| MED-AGG1 | CORE1, CORE2, MED-EDGE1, MED-EDGE2 |
+| MED-EDGE1 | MED-AGG1 |
+| MED-EDGE2 | MED-AGG1 |
+| RES-AGG1 | CORE1, CORE5, RES-EDGE1, RES-EDGE2 |
+| RES-EDGE1 | RES-AGG1 |
+| RES-EDGE2 | RES-AGG1 |
 
 ---
 
@@ -357,7 +374,7 @@ This document defines the network architecture for E-University, a multi-campus 
 
 #### MPLS-Enabled Interfaces
 
-All point-to-point interfaces (Gi2-Gi6) on core, aggregation, and PE routers have MPLS enabled:
+All point-to-point interfaces (Gi2-Gi6) on core, aggregation, and Edge routers have MPLS enabled:
 
 ```
 interface GigabitEthernet2
@@ -382,15 +399,15 @@ interface GigabitEthernet2
 
 | VRF Name | RD Suffix | Route Target | Purpose | Deployed On |
 |----------|-----------|--------------|---------|-------------|
-| STUDENT-NET | :100 | 65000:100 | Student residential | Main PE1/PE2 |
-| STAFF-NET | :200 | 65000:200 | Staff/Faculty | All PEs |
-| RESEARCH-NET | :300 | 65000:300 | Research partners | All PEs |
-| MEDICAL-NET | :400 | 65000:400 | HIPAA medical | Med PE1/PE2 only |
-| GUEST-NET | :500 | 65000:500 | Guest/Visitor | All PEs |
+| STUDENT-NET | :100 | 65000:100 | Student residential | Main EDGE1/EDGE2 |
+| STAFF-NET | :200 | 65000:200 | Staff/Faculty | All Edge routers |
+| RESEARCH-NET | :300 | 65000:300 | Research partners | All Edge routers |
+| MEDICAL-NET | :400 | 65000:400 | HIPAA medical | Med EDGE1/EDGE2 only |
+| GUEST-NET | :500 | 65000:500 | Guest/Visitor | All Edge routers |
 
 ### 8.2 VRF Deployment Matrix
 
-| VRF | MAIN-PE1 | MAIN-PE2 | MED-PE1 | MED-PE2 | RES-PE1 | RES-PE2 |
+| VRF | MAIN-EDGE1 | MAIN-EDGE2 | MED-EDGE1 | MED-EDGE2 | RES-EDGE1 | RES-EDGE2 |
 |-----|----------|----------|---------|---------|---------|---------|
 | STUDENT-NET | ✓ | ✓ | - | - | - | - |
 | STAFF-NET | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -559,12 +576,49 @@ line vty 0 15
 
 ### 12.3 Automation Scripts
 
+#### Core Scripts
+
 | Script | Purpose |
 |--------|---------|
 | `generate_configs.py` | Generate configs from templates |
 | `validate.py` | Pre/post deployment validation |
 | `deploy.py` | Deploy configs with backup/rollback |
-| `orchestrate.py` | Full pipeline orchestration |
+| `orchestrate.py` | Full pipeline orchestration (generate → validate → deploy) |
+
+#### Deployment Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `deploy_bfd.py` | Deploy BFD on OSPF/BGP interfaces (50ms interval, 3x multiplier) |
+| `deploy_inet.py` | Deploy Internet gateway BGP configuration |
+| `deploy_customer_traffic.py` | Deploy L3VPN/customer traffic on Edge routers |
+| `fix_edge.py` | Apply Edge router fixes and corrections |
+
+#### Verification Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `verify_l3vpn.py` | Verify VPNv4 BGP and cross-campus VRF connectivity |
+| `verify_bfd.py` | Verify BFD neighbors and test failover detection |
+| `verify_internet.py` | Verify Internet gateway connectivity |
+| `troubleshoot.py` | Comprehensive troubleshooting across all protocols |
+| `export_video_baseline.py` | Export baseline configurations for documentation |
+
+#### Orchestration Pipeline
+
+```bash
+# Full automated deployment
+python orchestrate.py --execute
+
+# Plan mode (dry-run)
+python orchestrate.py --plan
+
+# Generate configs only
+python orchestrate.py --generate-only
+
+# Validate only (no deployment)
+python orchestrate.py --validate-only
+```
 
 ### 12.4 Validation Tests
 
@@ -575,6 +629,42 @@ line vty 0 15
 | OSPF | All expected neighbors in FULL state |
 | BGP | All sessions Established |
 | MPLS LDP | All LDP neighbors Operational |
+| L3VPN/VPNv4 | VRF routes exchanged across campuses |
+| BFD | All BFD neighbors up with correct timers |
+| Internet | Gateway reachability and BGP to upstream |
+
+### 12.5 NetBox Integration
+
+Populate NetBox with device inventory using:
+
+```bash
+# Full population (devices, IPs, interfaces, connections)
+python netbox/populate_euniv.py
+
+# Cleanup existing data first
+python netbox/populate_euniv.py --cleanup
+
+# Verify population
+python netbox/populate_euniv.py --verify
+```
+
+### 12.6 EVE-NG Lab Integration
+
+The project includes complete EVE-NG lab configurations:
+
+| Directory | Contents |
+|-----------|----------|
+| `eve-ng/TOPOLOGY_GUIDE.md` | Full cabling guide with interface mappings |
+| `eve-ng/startup-configs/` | 16 minimal startup configs for initial boot |
+| `eve-ng/full-configs/` | 16 complete configs with all protocols |
+
+```bash
+# Generate startup configs
+python eve-ng/generate_startup_configs.py
+
+# Generate full configs
+python eve-ng/generate_full_configs.py
+```
 
 ---
 
@@ -625,6 +715,8 @@ show ip route vrf <name>
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2025-11-27 | Network Team | Initial release |
+| 1.1 | 2025-12-02 | Network Team | Added BFD, deployment/verification scripts, EVE-NG integration, NetBox population docs |
+| 1.2 | 2025-12-02 | Network Team | Renamed PE routers to Edge routers, added Host layer with 6 Linux hosts for traffic generation |
 
 ---
 
