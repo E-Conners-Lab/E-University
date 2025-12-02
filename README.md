@@ -618,6 +618,33 @@ line vty 0 15
 | `troubleshoot.py` | Comprehensive troubleshooting across all protocols |
 | `export_video_baseline.py` | Export baseline configurations for documentation |
 
+#### Traffic Test Scripts
+
+| Script | Framework | Purpose |
+|--------|-----------|---------|
+| `traffic_test.py` | Netmiko | Fast end-to-end traffic test (~3s quick, ~60s full) |
+| `traffic_test_pyats.py` | pyATS/Genie | pyATS-based traffic test with structured parsing |
+
+**Traffic Test Usage:**
+```bash
+# Quick connectivity check (Netmiko - faster)
+python traffic_test.py --quick
+
+# Full throughput + traceroute test
+python traffic_test.py
+
+# pyATS version with testbed
+python traffic_test_pyats.py --quick
+python traffic_test_pyats.py --testbed pyats/host_testbed.yaml
+```
+
+**JSON Output Structure:**
+- `test_metadata`: Timestamp, duration, hosts tested
+- `connectivity_matrix`: Host-to-host reachability with latency
+- `throughput_results`: Measured throughput per path (Mbps)
+- `traceroute_results`: Path hops with MPLS label detection
+- `summary`: Aggregate statistics (min/max/avg latency and throughput)
+
 #### Orchestration Pipeline
 
 ```bash
@@ -732,6 +759,7 @@ show ip route vrf <name>
 | 1.1 | 2025-12-02 | Network Team | Added BFD, deployment/verification scripts, EVE-NG integration, NetBox population docs |
 | 1.2 | 2025-12-02 | Network Team | Renamed PE routers to Edge routers, added Host layer with 6 Linux hosts for traffic generation |
 | 1.3 | 2025-12-02 | Network Team | Replaced Linux hosts with IOSv routers for traffic generation via IP SLA probes, fixed VPNv4 route reflection on AGG routers, added host deployment scripts |
+| 1.4 | 2025-12-02 | Network Team | Added end-to-end traffic test scripts (Netmiko + pyATS versions) with JSON output for visualization, created pyATS host testbed |
 
 ---
 

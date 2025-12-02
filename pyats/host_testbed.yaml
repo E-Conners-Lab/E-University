@@ -1,0 +1,129 @@
+# pyATS Testbed for E-University Host Routers (Traffic Generators)
+# These IOSv routers are used for end-to-end traffic testing via STAFF-NET VRF
+
+devices:
+  HOST1:
+    alias: RES-HOST1
+    connections:
+      cli:
+        ip: 192.168.68.55
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: REDACTED
+        username: admin
+      enable:
+        password: REDACTED
+    os: ios
+    type: router
+    custom:
+      host_ip: 172.18.1.10
+      campus: research
+      edge_router: EUNIV-RES-EDGE1
+
+  HOST2:
+    alias: RES-HOST2
+    connections:
+      cli:
+        ip: 192.168.68.74
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: REDACTED
+        username: admin
+      enable:
+        password: REDACTED
+    os: ios
+    type: router
+    custom:
+      host_ip: 172.18.2.10
+      campus: research
+      edge_router: EUNIV-RES-EDGE2
+
+  HOST3:
+    alias: MAIN-HOST3
+    connections:
+      cli:
+        ip: 192.168.68.77
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: REDACTED
+        username: admin
+      enable:
+        password: REDACTED
+    os: ios
+    type: router
+    custom:
+      host_ip: 172.16.1.10
+      campus: main
+      edge_router: EUNIV-MAIN-EDGE1
+
+  HOST4:
+    alias: MAIN-HOST4
+    connections:
+      cli:
+        ip: 192.168.68.78
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: REDACTED
+        username: admin
+      enable:
+        password: REDACTED
+    os: ios
+    type: router
+    custom:
+      host_ip: 172.16.2.10
+      campus: main
+      edge_router: EUNIV-MAIN-EDGE2
+
+  HOST5:
+    alias: MED-HOST5
+    connections:
+      cli:
+        ip: 192.168.68.79
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: REDACTED
+        username: admin
+      enable:
+        password: REDACTED
+    os: ios
+    type: router
+    custom:
+      host_ip: 172.17.2.10
+      campus: medical
+      edge_router: EUNIV-MED-EDGE2
+
+  HOST6:
+    alias: MED-HOST6
+    connections:
+      cli:
+        ip: 192.168.68.80
+        protocol: ssh
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: REDACTED
+        username: admin
+      enable:
+        password: REDACTED
+    os: ios
+    type: router
+    custom:
+      host_ip: 172.17.1.10
+      campus: medical
+      edge_router: EUNIV-MED-EDGE1
