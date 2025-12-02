@@ -682,6 +682,7 @@ line vty 0 15
 | `traffic_test.py` | Netmiko | Fast end-to-end traffic test (~3s quick, ~60s full) |
 | `traffic_test_pyats.py` | pyATS/Genie | pyATS-based traffic test with structured parsing |
 | `pyats/tests/validate_network.py` | pyATS | Comprehensive network validation (OSPF, BGP, MPLS, VRF, traffic, internet) |
+| `pyats/tests/test_euniv_network.py` | pyATS | Network validation tests with JSON output support |
 | `pyats/scripts/shutdown_unused_interfaces.py` | pyATS | Admin shutdown unused interfaces on all devices |
 
 **Traffic Test Usage:**
@@ -697,12 +698,27 @@ python traffic_test_pyats.py --quick
 python traffic_test_pyats.py --testbed pyats/host_testbed.yaml
 ```
 
-**JSON Output Structure:**
+**JSON Output Structure (traffic tests):**
 - `test_metadata`: Timestamp, duration, hosts tested
 - `connectivity_matrix`: Host-to-host reachability with latency
 - `throughput_results`: Measured throughput per path (Mbps)
 - `traceroute_results`: Path hops with MPLS label detection
 - `summary`: Aggregate statistics (min/max/avg latency and throughput)
+
+**Network Validation Tests:**
+```bash
+# Run all validation tests
+python pyats/tests/test_euniv_network.py --testbed pyats/testbed.yaml
+
+# Run specific test category
+python pyats/tests/test_euniv_network.py --testbed pyats/testbed.yaml --test bgp
+
+# Export results to JSON
+python pyats/tests/test_euniv_network.py --testbed pyats/testbed.yaml --json-output results.json
+
+# Test single device with JSON output
+python pyats/tests/test_euniv_network.py --testbed pyats/testbed.yaml --device EUNIV-CORE1 -j core1.json
+```
 
 #### Orchestration Pipeline
 
@@ -820,6 +836,7 @@ show ip route vrf <name>
 | 1.3 | 2025-12-02 | Network Team | Replaced Linux hosts with IOSv routers for traffic generation via IP SLA probes, fixed VPNv4 route reflection on AGG routers, added host deployment scripts |
 | 1.4 | 2025-12-02 | Network Team | Added end-to-end traffic test scripts (Netmiko + pyATS versions) with JSON output for visualization, created pyATS host testbed |
 | 1.5 | 2025-12-02 | Network Team | Added comprehensive network validation test (validate_network.py), interface shutdown automation script |
+| 1.6 | 2025-12-02 | Network Team | Added JSON output support to test_euniv_network.py for exporting test results |
 
 ---
 

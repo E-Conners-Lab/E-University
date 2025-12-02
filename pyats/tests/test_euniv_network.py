@@ -17,12 +17,14 @@ Usage:
     python test_euniv_network.py --testbed testbed.yaml
     python test_euniv_network.py --testbed testbed.yaml --test ospf
     python test_euniv_network.py --testbed testbed.yaml --test bgp --device EUNIV-CORE1
+    python test_euniv_network.py --testbed testbed.yaml --json-output results.json
 """
 
 import os
 import sys
 import argparse
 import yaml
+import json
 import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional
@@ -81,6 +83,18 @@ class TestResult:
     def summary(self) -> str:
         status = "PASSED" if self.failed == 0 else "FAILED"
         return f"{self.name}: {status} (Pass: {self.passed}, Fail: {self.failed}, Skip: {self.skipped})"
+
+    def to_dict(self) -> Dict:
+        """Convert result to dictionary for JSON export."""
+        return {
+            "name": self.name,
+            "status": "PASSED" if self.failed == 0 else "FAILED",
+            "passed": self.passed,
+            "failed": self.failed,
+            "skipped": self.skipped,
+            "total": self.total,
+            "details": self.details
+        }
 
 
 class EUnivNetworkTests:
@@ -559,22 +573,54 @@ class EUnivNetworkTests:
         logger.info("\n" + "=" * 70)
         logger.info("TEST SUMMARY")
         logger.info("=" * 70)
-        
+
         total_passed = 0
         total_failed = 0
         total_skipped = 0
-        
+
         for test_name, result in self.results.items():
             logger.info(result.summary())
             total_passed += result.passed
             total_failed += result.failed
             total_skipped += result.skipped
-        
+
         logger.info("-" * 70)
         overall = "PASSED" if total_failed == 0 else "FAILED"
         logger.info(f"OVERALL: {overall}")
         logger.info(f"Total: Pass={total_passed}, Fail={total_failed}, Skip={total_skipped}")
         logger.info("=" * 70)
+
+    def export_results_json(self, output_file: str = None) -> Dict:
+        """Export test results to JSON format.
+
+        Args:
+            output_file: Optional path to write JSON file. If None, returns dict only.
+
+        Returns:
+            Dictionary with all test results.
+        """
+        total_passed = sum(r.passed for r in self.results.values())
+        total_failed = sum(r.failed for r in self.results.values())
+        total_skipped = sum(r.skipped for r in self.results.values())
+
+        export_data = {
+            "timestamp": datetime.now().isoformat(),
+            "overall_status": "PASSED" if total_failed == 0 else "FAILED",
+            "summary": {
+                "total_passed": total_passed,
+                "total_failed": total_failed,
+                "total_skipped": total_skipped,
+                "total_tests": total_passed + total_failed + total_skipped
+            },
+            "tests": {name: result.to_dict() for name, result in self.results.items()}
+        }
+
+        if output_file:
+            with open(output_file, 'w') as f:
+                json.dump(export_data, f, indent=2)
+            logger.info(f"Results exported to: {output_file}")
+
+        return export_data
 
 
 def main():
@@ -584,6 +630,7 @@ def main():
     parser.add_argument("--test", choices=["all", "connectivity", "ospf", "bgp", "mpls", "vrf", "interfaces", "reachability"],
                        default="all", help="Test to run")
     parser.add_argument("--device", help="Specific device to test (default: all)")
+    parser.add_argument("--json-output", "-j", help="Export results to JSON file (e.g., results.json)")
     args = parser.parse_args()
     
     # Initialize test suite
@@ -597,7 +644,7 @@ def main():
         tests.run_all_tests(devices)
     else:
         tests.connect_devices(devices)
-        
+
         if args.test == "connectivity":
             tests.test_connectivity(devices)
         elif args.test == "ospf":
@@ -612,9 +659,13 @@ def main():
             tests.test_interfaces(devices)
         elif args.test == "reachability":
             tests.test_loopback_reachability(args.device)
-        
+
         tests.disconnect_devices()
         tests.print_summary()
+
+    # Export JSON results if requested
+    if args.json_output:
+        tests.export_results_json(args.json_output)
 
 
 if __name__ == "__main__":
