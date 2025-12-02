@@ -455,21 +455,21 @@ class EUnivNetworkTests:
     def test_loopback_reachability(self, source_device: str = None) -> TestResult:
         """Test reachability to all loopbacks from a source device."""
         result = TestResult("Loopback Reachability")
-        
+
         # Use first core device as source if not specified
         if source_device is None:
             source_device = "EUNIV-CORE1"
-        
+
         if source_device not in self.connected_devices:
             result.add_fail(f"Source device {source_device} not connected")
             return result
-        
+
         logger.info("\n" + "=" * 60)
         logger.info(f"TEST: Loopback Reachability (from {source_device})")
         logger.info("=" * 60)
-        
+
         device = self.connected_devices[source_device]
-        
+
         # Get loopback IPs from intent
         targets = []
         for dev_name, dev_data in self.intent.get("devices", {}).items():
@@ -477,12 +477,23 @@ class EUnivNetworkTests:
                 loopback = dev_data.get("loopback0")
                 if loopback:
                     targets.append((dev_name, loopback))
-        
-        for target_name, target_ip in targets:
+
+        if not targets:
+            logger.warning("No loopback targets found in intent file - skipping reachability test")
+            result.add_skip("No targets in intent file", source_device)
+            self.results["loopback_reachability"] = result
+            return result
+
+        logger.info(f"Testing reachability to {len(targets)} loopbacks...")
+
+        for i, (target_name, target_ip) in enumerate(targets, 1):
+            # Show progress
+            logger.info(f"  [{i}/{len(targets)}] Pinging {target_name} ({target_ip})...")
+
             try:
                 # Ping the target
                 ping_result = device.ping(target_ip, count=3)
-                
+
                 if ping_result and ping_result.get("success", False):
                     result.add_pass(
                         f"Ping to {target_name} ({target_ip}) successful",
@@ -498,7 +509,7 @@ class EUnivNetworkTests:
                     f"Error pinging {target_name} ({target_ip}): {e}",
                     source_device
                 )
-        
+
         self.results["loopback_reachability"] = result
         return result
     
@@ -631,6 +642,7 @@ class EUnivNetworkTests:
 
         Args:
             output_file: Optional path to write JSON file. If None, returns dict only.
+                        If file exists, a timestamped filename will be used instead.
 
         Returns:
             Dictionary with all test results.
@@ -652,9 +664,17 @@ class EUnivNetworkTests:
         }
 
         if output_file:
-            with open(output_file, 'w') as f:
+            # If file exists, add timestamp to filename
+            actual_file = output_file
+            if os.path.exists(output_file):
+                base, ext = os.path.splitext(output_file)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                actual_file = f"{base}_{timestamp}{ext}"
+                logger.info(f"File {output_file} exists, using: {actual_file}")
+
+            with open(actual_file, 'w') as f:
                 json.dump(export_data, f, indent=2)
-            logger.info(f"Results exported to: {output_file}")
+            logger.info(f"Results exported to: {actual_file}")
 
         return export_data
 
