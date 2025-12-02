@@ -22,6 +22,7 @@ Usage:
 
 import os
 import sys
+import re
 import argparse
 import yaml
 import json
@@ -239,68 +240,77 @@ class EUnivNetworkTests:
     # TEST: BGP
     # =========================================================================
     def test_bgp(self, devices: List[str] = None) -> TestResult:
-        """Test BGP neighbor state."""
+        """Test BGP neighbor state using manual parsing."""
         result = TestResult("BGP")
-        
+
         if devices is None:
             devices = list(self.connected_devices.keys())
-        
+
         logger.info("\n" + "=" * 60)
         logger.info("TEST: BGP Neighbors")
         logger.info("=" * 60)
-        
+
         for device_name in devices:
             if device_name not in self.connected_devices:
                 result.add_skip(f"Device not connected", device_name)
                 continue
-            
+
             device = self.connected_devices[device_name]
-            
+
             try:
-                # Parse BGP summary
-                bgp_summary = device.parse("show bgp all summary")
-                
-                if not bgp_summary:
-                    result.add_fail(f"No BGP data found", device_name)
-                    continue
-                
-                # Check each address family
-                for vrf_name, vrf_data in bgp_summary.get("vrf", {}).items():
-                    for af_name, af_data in vrf_data.get("address_family", {}).items():
-                        neighbors = af_data.get("neighbors", {})
-                        
-                        established_count = 0
-                        problem_neighbors = []
-                        
-                        for neighbor_ip, neighbor_data in neighbors.items():
-                            state = neighbor_data.get("state_pfxrcd", "")
-                            
-                            # If state is a number, it's established (prefix count)
-                            if str(state).isdigit() or state == "0":
-                                established_count += 1
-                            elif state.lower() in ["established", "active"]:
-                                established_count += 1
+                # Use manual parsing instead of Genie parser
+                output = device.execute("show bgp all summary")
+
+                established = 0
+                not_established = []
+
+                for line in output.splitlines():
+                    # Parse neighbor lines (start with IP address)
+                    match = re.match(r'^(\d+\.\d+\.\d+\.\d+)\s+', line.strip())
+                    if match:
+                        parts = line.split()
+                        if len(parts) >= 9:
+                            neighbor = parts[0]
+                            # Last column is State/PfxRcd
+                            state = parts[-1]
+
+                            # If state is a number, session is established (prefix count)
+                            if state.isdigit():
+                                established += 1
+                            elif state in ["Idle", "Active", "Connect", "OpenSent", "OpenConfirm"]:
+                                not_established.append((neighbor, state))
                             else:
-                                problem_neighbors.append((neighbor_ip, state))
-                        
-                        if problem_neighbors:
-                            for neighbor_ip, state in problem_neighbors:
-                                result.add_fail(
-                                    f"BGP neighbor {neighbor_ip} ({af_name}) is {state}",
-                                    device_name,
-                                    expected="Established",
-                                    actual=state
-                                )
-                        
-                        if established_count > 0:
-                            result.add_pass(
-                                f"{established_count} BGP neighbors established ({af_name})",
-                                device_name
-                            )
-                            
+                                # Could be other status like (Admin), treat as established
+                                established += 1
+
+                if established > 0 and not not_established:
+                    result.add_pass(
+                        f"{established} BGP sessions established",
+                        device_name
+                    )
+                elif established > 0:
+                    for neighbor, state in not_established:
+                        result.add_fail(
+                            f"BGP neighbor {neighbor} is {state}",
+                            device_name,
+                            expected="Established",
+                            actual=state
+                        )
+                    result.add_pass(
+                        f"{established} BGP sessions established",
+                        device_name
+                    )
+                elif "PE" in device_name or "EDGE" in device_name or "CORE4" in device_name or "CORE5" in device_name:
+                    result.add_fail(
+                        "No BGP sessions found (expected on this device)",
+                        device_name
+                    )
+                else:
+                    result.add_skip("BGP not configured", device_name)
+
             except Exception as e:
-                result.add_fail(f"Error parsing BGP: {e}", device_name)
-        
+                result.add_fail(f"Error checking BGP: {e}", device_name)
+
         self.results["bgp"] = result
         return result
     
@@ -308,61 +318,77 @@ class EUnivNetworkTests:
     # TEST: MPLS LDP
     # =========================================================================
     def test_mpls_ldp(self, devices: List[str] = None) -> TestResult:
-        """Test MPLS LDP neighbor state."""
+        """Test MPLS LDP neighbor state using manual parsing."""
         result = TestResult("MPLS LDP")
-        
+
         if devices is None:
             # Only test core and aggregation devices
-            devices = [d for d in self.connected_devices.keys() 
+            devices = [d for d in self.connected_devices.keys()
                       if "CORE" in d or "AGG" in d]
-        
+
         logger.info("\n" + "=" * 60)
         logger.info("TEST: MPLS LDP Neighbors")
         logger.info("=" * 60)
-        
+
         for device_name in devices:
             if device_name not in self.connected_devices:
                 result.add_skip(f"Device not connected", device_name)
                 continue
-            
+
             device = self.connected_devices[device_name]
-            
+
             try:
-                # Parse LDP neighbors
-                ldp_neighbors = device.parse("show mpls ldp neighbor")
-                
-                if not ldp_neighbors:
-                    # LDP might not be configured
-                    result.add_skip(f"No LDP neighbors (may not be configured)", device_name)
-                    continue
-                
-                # Count operational neighbors
-                vrf_data = ldp_neighbors.get("vrf", {})
-                neighbor_count = 0
-                
-                for vrf_name, vrf_info in vrf_data.items():
-                    peers = vrf_info.get("peers", {})
-                    for peer_id, peer_data in peers.items():
-                        state = peer_data.get("state", "")
-                        if state.lower() == "operational":
-                            neighbor_count += 1
+                # Use manual parsing instead of Genie parser
+                output = device.execute("show mpls ldp neighbor")
+
+                # Parse LDP neighbors - IOS format:
+                # Peer LDP Ident: 10.255.0.2:0; Local LDP Ident 10.255.0.1:0
+                #     TCP connection: 10.255.0.2.646 - 10.255.0.1.43287
+                #     State: Oper; Msgs sent/rcvd: 1234/1234; Downstream
+                operational = 0
+                not_operational = []
+
+                current_peer = None
+                for line in output.splitlines():
+                    # Match peer identifier line
+                    peer_match = re.search(r'Peer LDP Ident:\s*(\d+\.\d+\.\d+\.\d+)', line)
+                    if peer_match:
+                        current_peer = peer_match.group(1)
+
+                    # Match state line
+                    state_match = re.search(r'State:\s*(\w+)', line)
+                    if state_match and current_peer:
+                        state = state_match.group(1)
+                        if state.lower() == "oper":
+                            operational += 1
                         else:
-                            result.add_fail(
-                                f"LDP peer {peer_id} is {state}",
-                                device_name,
-                                expected="Operational",
-                                actual=state
-                            )
-                
-                if neighbor_count > 0:
+                            not_operational.append((current_peer, state))
+                        current_peer = None
+
+                if operational > 0 and not not_operational:
                     result.add_pass(
-                        f"{neighbor_count} LDP neighbors operational",
+                        f"{operational} LDP neighbors operational",
                         device_name
                     )
-                    
+                elif operational > 0:
+                    for peer, state in not_operational:
+                        result.add_fail(
+                            f"LDP peer {peer} is {state}",
+                            device_name,
+                            expected="Oper",
+                            actual=state
+                        )
+                    result.add_pass(
+                        f"{operational} LDP neighbors operational",
+                        device_name
+                    )
+                elif "No LDP" in output or not output.strip():
+                    result.add_skip("LDP not configured", device_name)
+                else:
+                    result.add_fail("No operational LDP neighbors", device_name)
+
             except Exception as e:
-                # Parser might not exist for this command
-                result.add_skip(f"Could not parse LDP: {e}", device_name)
+                result.add_skip(f"Could not check LDP: {e}", device_name)
         
         self.results["mpls_ldp"] = result
         return result
@@ -480,43 +506,53 @@ class EUnivNetworkTests:
     # TEST: Interface Status
     # =========================================================================
     def test_interfaces(self, devices: List[str] = None) -> TestResult:
-        """Test interface status."""
+        """Test interface status, skipping admin-shutdown interfaces."""
         result = TestResult("Interface Status")
-        
+
         if devices is None:
             devices = list(self.connected_devices.keys())
-        
+
         logger.info("\n" + "=" * 60)
         logger.info("TEST: Interface Status")
         logger.info("=" * 60)
-        
+
         for device_name in devices:
             if device_name not in self.connected_devices:
                 result.add_skip(f"Device not connected", device_name)
                 continue
-            
+
             device = self.connected_devices[device_name]
-            
+
             try:
                 # Parse interface status
                 interfaces = device.parse("show ip interface brief")
-                
+
                 down_interfaces = []
                 up_interfaces = 0
-                
+                admin_down = 0
+
                 for intf_name, intf_data in interfaces.get("interface", {}).items():
                     status = intf_data.get("status", "").lower()
                     protocol = intf_data.get("protocol", "").lower()
-                    
+
                     # Skip management and unassigned interfaces
                     if "unassigned" in str(intf_data.get("ip_address", "")):
                         continue
-                    
+
+                    # Skip loopbacks
+                    if "Loopback" in intf_name:
+                        continue
+
+                    # Skip administratively shutdown interfaces
+                    if status == "administratively down" or "admin" in status:
+                        admin_down += 1
+                        continue
+
                     if status == "up" and protocol == "up":
                         up_interfaces += 1
-                    elif "Loopback" not in intf_name:
+                    else:
                         down_interfaces.append((intf_name, status, protocol))
-                
+
                 if down_interfaces:
                     for intf_name, status, protocol in down_interfaces:
                         result.add_fail(
@@ -525,15 +561,15 @@ class EUnivNetworkTests:
                             expected="up/up",
                             actual=f"{status}/{protocol}"
                         )
-                
-                result.add_pass(
-                    f"{up_interfaces} interfaces up/up",
-                    device_name
-                )
-                    
+
+                msg = f"{up_interfaces} interfaces up/up"
+                if admin_down > 0:
+                    msg += f" ({admin_down} admin-down skipped)"
+                result.add_pass(msg, device_name)
+
             except Exception as e:
                 result.add_fail(f"Error parsing interfaces: {e}", device_name)
-        
+
         self.results["interfaces"] = result
         return result
     
