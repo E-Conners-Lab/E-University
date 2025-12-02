@@ -30,55 +30,55 @@ HOST_ROUTERS = {
         "mgmt_ip": "192.168.68.55/22",
         "host_ip": "172.18.1.10/24",
         "gateway": "172.18.1.1",
-        "connected_to": "EUNIV-RES-PE1",
+        "connected_to": "EUNIV-RES-EDGE1",
         "connected_interface": "GigabitEthernet6",
         "campus": "research-campus",
-        "comments": "Traffic generator connected to RES-PE1",
+        "comments": "Traffic generator connected to RES-EDGE1",
     },
     "HOST2": {
         "mgmt_ip": "192.168.68.74/22",
         "host_ip": "172.18.2.10/24",
         "gateway": "172.18.2.1",
-        "connected_to": "EUNIV-RES-PE2",
+        "connected_to": "EUNIV-RES-EDGE2",
         "connected_interface": "GigabitEthernet6",
         "campus": "research-campus",
-        "comments": "Traffic generator connected to RES-PE2",
+        "comments": "Traffic generator connected to RES-EDGE2",
     },
     "HOST3": {
         "mgmt_ip": "192.168.68.77/22",
         "host_ip": "172.16.1.10/24",
         "gateway": "172.16.1.1",
-        "connected_to": "EUNIV-MAIN-PE1",
-        "connected_interface": "GigabitEthernet6",
+        "connected_to": "EUNIV-MAIN-EDGE1",
+        "connected_interface": "GigabitEthernet4",
         "campus": "main-campus",
-        "comments": "Traffic generator connected to MAIN-PE1",
+        "comments": "Traffic generator connected to MAIN-EDGE1",
     },
     "HOST4": {
         "mgmt_ip": "192.168.68.78/22",
         "host_ip": "172.16.2.10/24",
         "gateway": "172.16.2.1",
-        "connected_to": "EUNIV-MAIN-PE2",
+        "connected_to": "EUNIV-MAIN-EDGE2",
         "connected_interface": "GigabitEthernet6",
         "campus": "main-campus",
-        "comments": "Traffic generator connected to MAIN-PE2",
+        "comments": "Traffic generator connected to MAIN-EDGE2",
     },
     "HOST5": {
         "mgmt_ip": "192.168.68.79/22",
         "host_ip": "172.17.2.10/24",
         "gateway": "172.17.2.1",
-        "connected_to": "EUNIV-MED-PE2",
+        "connected_to": "EUNIV-MED-EDGE2",
         "connected_interface": "GigabitEthernet6",
         "campus": "medical-campus",
-        "comments": "Traffic generator connected to MED-PE2",
+        "comments": "Traffic generator connected to MED-EDGE2",
     },
     "HOST6": {
         "mgmt_ip": "192.168.68.80/22",
         "host_ip": "172.17.1.10/24",
         "gateway": "172.17.1.1",
-        "connected_to": "EUNIV-MED-PE1",
+        "connected_to": "EUNIV-MED-EDGE1",
         "connected_interface": "GigabitEthernet6",
         "campus": "medical-campus",
-        "comments": "Traffic generator connected to MED-PE1",
+        "comments": "Traffic generator connected to MED-EDGE1",
     },
 }
 
@@ -212,14 +212,14 @@ def add_hosts_to_netbox(url: str, token: str):
             else:
                 print(f"  -> Host IP exists: {config['host_ip']}")
 
-        # Create cable connection to PE router
-        pe_device = nb.dcim.devices.get(name=config["connected_to"])
-        if pe_device:
-            pe_intf = nb.dcim.interfaces.get(device_id=pe_device.id, name=config["connected_interface"])
-            if not pe_intf:
-                # Create Gi6 on PE if it doesn't exist
-                pe_intf = nb.dcim.interfaces.create({
-                    "device": pe_device.id,
+        # Create cable connection to Edge router
+        edge_device = nb.dcim.devices.get(name=config["connected_to"])
+        if edge_device:
+            edge_intf = nb.dcim.interfaces.get(device_id=edge_device.id, name=config["connected_interface"])
+            if not edge_intf:
+                # Create interface on Edge if it doesn't exist
+                edge_intf = nb.dcim.interfaces.create({
+                    "device": edge_device.id,
                     "name": config["connected_interface"],
                     "type": "1000base-t",
                     "description": f"Link to {host_name}"
@@ -227,15 +227,15 @@ def add_hosts_to_netbox(url: str, token: str):
                 print(f"  + Created interface on {config['connected_to']}: {config['connected_interface']}")
 
             # Check if already cabled
-            if host_intf and pe_intf and not host_intf.cable and not pe_intf.cable:
+            if host_intf and edge_intf and not host_intf.cable and not edge_intf.cable:
                 try:
                     nb.dcim.cables.create({
                         "a_terminations": [{"object_type": "dcim.interface", "object_id": host_intf.id}],
-                        "b_terminations": [{"object_type": "dcim.interface", "object_id": pe_intf.id}],
+                        "b_terminations": [{"object_type": "dcim.interface", "object_id": edge_intf.id}],
                         "label": f"{host_name} to {config['connected_to']}",
                         "status": "connected"
                     })
-                    print(f"  + Created cable: {host_name} Gi0/0 <-> {config['connected_to']} Gi6")
+                    print(f"  + Created cable: {host_name} Gi0/0 <-> {config['connected_to']} {config['connected_interface']}")
                 except Exception as e:
                     print(f"  ! Cable error: {e}")
             else:
@@ -247,7 +247,7 @@ def add_hosts_to_netbox(url: str, token: str):
     print("\nSummary:")
     print(f"  - Added {len(HOST_ROUTERS)} host routers to NetBox")
     print("  - Created management and host network IPs")
-    print("  - Created cable connections to PE routers")
+    print("  - Created cable connections to Edge routers")
     print("\nNext: Run deploy_host_switches.py to configure the devices")
 
 

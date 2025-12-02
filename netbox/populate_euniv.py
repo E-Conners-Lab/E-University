@@ -5,7 +5,7 @@ E University Network Lab - NetBox Population Script
 Populates NetBox with a 16-device multi-campus network:
 - 5 Core routers (3 Route Reflectors)
 - 3 Aggregation routers
-- 6 PE/BNG routers
+- 6 Edge routers
 - 2 Internet Gateways
 
 Usage:
@@ -90,8 +90,8 @@ LAB_CONFIG = {
          "description": "BGP Route Reflector"},
         {"name": "Aggregation Router", "slug": "aggregation-router", "color": "9c27b0",
          "description": "Campus aggregation layer"},
-        {"name": "PE Router", "slug": "pe-router", "color": "2196f3",
-         "description": "Provider Edge / BNG router"},
+        {"name": "Edge Router", "slug": "edge-router", "color": "2196f3",
+         "description": "Campus Edge router"},
         {"name": "Internet Gateway", "slug": "internet-gateway", "color": "4caf50",
          "description": "Internet edge / peering router"}
     ],
@@ -237,34 +237,34 @@ LAB_CONFIG = {
             }
         },
         {
-            "name": "EUNIV-MAIN-PE1",
+            "name": "EUNIV-MAIN-EDGE1",
             "device_type": "c8000v",
-            "role": "pe-router",
-            "serial": "EUNIV-MAIN-PE1-SN001",
-            "comments": "Main Campus PE 1 - BNG + CGNAT",
+            "role": "edge-router",
+            "serial": "EUNIV-MAIN-EDGE1-SN001",
+            "comments": "Main Campus Edge 1 - L3VPN + CGNAT",
             "custom_fields": {
                 "loopback0_ipv4": "10.255.1.11/32",
                 "loopback0_ipv6": "2001:db8:e:1::11/128",
                 "bgp_asn": "65100",
                 "ospf_router_id": "10.255.1.11",
-                "device_function": "pe-bng",
+                "device_function": "edge",
                 "region": "main-campus",
                 "cgnat_inside_pool": "100.64.0.0/18",
                 "cgnat_outside_pool": "198.51.100.0/25"
             }
         },
         {
-            "name": "EUNIV-MAIN-PE2",
+            "name": "EUNIV-MAIN-EDGE2",
             "device_type": "c8000v",
-            "role": "pe-router",
-            "serial": "EUNIV-MAIN-PE2-SN001",
-            "comments": "Main Campus PE 2 - BNG + CGNAT (Redundant)",
+            "role": "edge-router",
+            "serial": "EUNIV-MAIN-EDGE2-SN001",
+            "comments": "Main Campus Edge 2 - L3VPN + CGNAT (Redundant)",
             "custom_fields": {
                 "loopback0_ipv4": "10.255.1.12/32",
                 "loopback0_ipv6": "2001:db8:e:1::12/128",
                 "bgp_asn": "65100",
                 "ospf_router_id": "10.255.1.12",
-                "device_function": "pe-bng",
+                "device_function": "edge",
                 "region": "main-campus",
                 "cgnat_inside_pool": "100.64.64.0/18",
                 "cgnat_outside_pool": "198.51.100.128/25"
@@ -288,32 +288,32 @@ LAB_CONFIG = {
             }
         },
         {
-            "name": "EUNIV-MED-PE1",
+            "name": "EUNIV-MED-EDGE1",
             "device_type": "c8000v",
-            "role": "pe-router",
-            "serial": "EUNIV-MED-PE1-SN001",
-            "comments": "Medical Campus PE 1 - HIPAA Compliant",
+            "role": "edge-router",
+            "serial": "EUNIV-MED-EDGE1-SN001",
+            "comments": "Medical Campus Edge 1 - HIPAA Compliant",
             "custom_fields": {
                 "loopback0_ipv4": "10.255.2.11/32",
                 "loopback0_ipv6": "2001:db8:e:2::11/128",
                 "bgp_asn": "65200",
                 "ospf_router_id": "10.255.2.11",
-                "device_function": "pe-bng",
+                "device_function": "edge",
                 "region": "medical-campus"
             }
         },
         {
-            "name": "EUNIV-MED-PE2",
+            "name": "EUNIV-MED-EDGE2",
             "device_type": "c8000v",
-            "role": "pe-router",
-            "serial": "EUNIV-MED-PE2-SN001",
-            "comments": "Medical Campus PE 2 - HIPAA Compliant (Redundant)",
+            "role": "edge-router",
+            "serial": "EUNIV-MED-EDGE2-SN001",
+            "comments": "Medical Campus Edge 2 - HIPAA Compliant (Redundant)",
             "custom_fields": {
                 "loopback0_ipv4": "10.255.2.12/32",
                 "loopback0_ipv6": "2001:db8:e:2::12/128",
                 "bgp_asn": "65200",
                 "ospf_router_id": "10.255.2.12",
-                "device_function": "pe-bng",
+                "device_function": "edge",
                 "region": "medical-campus"
             }
         },
@@ -335,32 +335,32 @@ LAB_CONFIG = {
             }
         },
         {
-            "name": "EUNIV-RES-PE1",
+            "name": "EUNIV-RES-EDGE1",
             "device_type": "c8000v",
-            "role": "pe-router",
-            "serial": "EUNIV-RES-PE1-SN001",
-            "comments": "Research Campus PE 1 - HPC & External Partners",
+            "role": "edge-router",
+            "serial": "EUNIV-RES-EDGE1-SN001",
+            "comments": "Research Campus Edge 1 - HPC & External Partners",
             "custom_fields": {
                 "loopback0_ipv4": "10.255.3.11/32",
                 "loopback0_ipv6": "2001:db8:e:3::11/128",
                 "bgp_asn": "65300",
                 "ospf_router_id": "10.255.3.11",
-                "device_function": "pe-bng",
+                "device_function": "edge",
                 "region": "research-campus"
             }
         },
         {
-            "name": "EUNIV-RES-PE2",
+            "name": "EUNIV-RES-EDGE2",
             "device_type": "c8000v",
-            "role": "pe-router",
-            "serial": "EUNIV-RES-PE2-SN001",
-            "comments": "Research Campus PE 2 - HPC & External Partners (Redundant)",
+            "role": "edge-router",
+            "serial": "EUNIV-RES-EDGE2-SN001",
+            "comments": "Research Campus Edge 2 - HPC & External Partners (Redundant)",
             "custom_fields": {
                 "loopback0_ipv4": "10.255.3.12/32",
                 "loopback0_ipv6": "2001:db8:e:3::12/128",
                 "bgp_asn": "65300",
                 "ospf_router_id": "10.255.3.12",
-                "device_function": "pe-bng",
+                "device_function": "edge",
                 "region": "research-campus"
             }
         }
@@ -383,16 +383,17 @@ LAB_CONFIG = {
             {"name": "GigabitEthernet1", "type": "1000base-t", "mgmt_only": True, "description": "Management"},
             {"name": "GigabitEthernet2", "type": "1000base-t", "description": "To Core 1"},
             {"name": "GigabitEthernet3", "type": "1000base-t", "description": "To Core 2"},
-            {"name": "GigabitEthernet4", "type": "1000base-t", "description": "To PE 1"},
-            {"name": "GigabitEthernet5", "type": "1000base-t", "description": "To PE 2"},
+            {"name": "GigabitEthernet4", "type": "1000base-t", "description": "To Edge 1"},
+            {"name": "GigabitEthernet5", "type": "1000base-t", "description": "To Edge 2"},
             {"name": "Loopback0", "type": "virtual", "description": "Router-ID / BGP Source"}
         ],
-        "pe": [
+        "edge": [
             {"name": "GigabitEthernet1", "type": "1000base-t", "mgmt_only": True, "description": "Management"},
             {"name": "GigabitEthernet2", "type": "1000base-t", "description": "To Aggregation"},
-            {"name": "GigabitEthernet3", "type": "1000base-t", "description": "To Peer PE"},
+            {"name": "GigabitEthernet3", "type": "1000base-t", "description": "To Peer Edge"},
             {"name": "GigabitEthernet4", "type": "1000base-t", "description": "Customer/VRF"},
             {"name": "GigabitEthernet5", "type": "1000base-t", "description": "Customer/VRF"},
+            {"name": "GigabitEthernet6", "type": "1000base-t", "description": "Host Link"},
             {"name": "Loopback0", "type": "virtual", "description": "Router-ID / BGP Source"}
         ],
         "internet-gw": [
@@ -459,36 +460,36 @@ LAB_CONFIG = {
 
         # Main Campus Internal
         {"a_device": "EUNIV-MAIN-AGG1", "a_interface": "GigabitEthernet4",
-         "b_device": "EUNIV-MAIN-PE1", "b_interface": "GigabitEthernet2",
-         "label": "MAIN-AGG1 to MAIN-PE1"},
+         "b_device": "EUNIV-MAIN-EDGE1", "b_interface": "GigabitEthernet2",
+         "label": "MAIN-AGG1 to MAIN-EDGE1"},
         {"a_device": "EUNIV-MAIN-AGG1", "a_interface": "GigabitEthernet5",
-         "b_device": "EUNIV-MAIN-PE2", "b_interface": "GigabitEthernet2",
-         "label": "MAIN-AGG1 to MAIN-PE2"},
-        {"a_device": "EUNIV-MAIN-PE1", "a_interface": "GigabitEthernet3",
-         "b_device": "EUNIV-MAIN-PE2", "b_interface": "GigabitEthernet3",
-         "label": "MAIN-PE1 to MAIN-PE2 (HA)"},
+         "b_device": "EUNIV-MAIN-EDGE2", "b_interface": "GigabitEthernet2",
+         "label": "MAIN-AGG1 to MAIN-EDGE2"},
+        {"a_device": "EUNIV-MAIN-EDGE1", "a_interface": "GigabitEthernet3",
+         "b_device": "EUNIV-MAIN-EDGE2", "b_interface": "GigabitEthernet3",
+         "label": "MAIN-EDGE1 to MAIN-EDGE2 (HA)"},
 
         # Medical Campus Internal
         {"a_device": "EUNIV-MED-AGG1", "a_interface": "GigabitEthernet4",
-         "b_device": "EUNIV-MED-PE1", "b_interface": "GigabitEthernet2",
-         "label": "MED-AGG1 to MED-PE1"},
+         "b_device": "EUNIV-MED-EDGE1", "b_interface": "GigabitEthernet2",
+         "label": "MED-AGG1 to MED-EDGE1"},
         {"a_device": "EUNIV-MED-AGG1", "a_interface": "GigabitEthernet5",
-         "b_device": "EUNIV-MED-PE2", "b_interface": "GigabitEthernet2",
-         "label": "MED-AGG1 to MED-PE2"},
-        {"a_device": "EUNIV-MED-PE1", "a_interface": "GigabitEthernet3",
-         "b_device": "EUNIV-MED-PE2", "b_interface": "GigabitEthernet3",
-         "label": "MED-PE1 to MED-PE2 (HA)"},
+         "b_device": "EUNIV-MED-EDGE2", "b_interface": "GigabitEthernet2",
+         "label": "MED-AGG1 to MED-EDGE2"},
+        {"a_device": "EUNIV-MED-EDGE1", "a_interface": "GigabitEthernet3",
+         "b_device": "EUNIV-MED-EDGE2", "b_interface": "GigabitEthernet3",
+         "label": "MED-EDGE1 to MED-EDGE2 (HA)"},
 
         # Research Campus Internal
         {"a_device": "EUNIV-RES-AGG1", "a_interface": "GigabitEthernet4",
-         "b_device": "EUNIV-RES-PE1", "b_interface": "GigabitEthernet2",
-         "label": "RES-AGG1 to RES-PE1"},
+         "b_device": "EUNIV-RES-EDGE1", "b_interface": "GigabitEthernet2",
+         "label": "RES-AGG1 to RES-EDGE1"},
         {"a_device": "EUNIV-RES-AGG1", "a_interface": "GigabitEthernet5",
-         "b_device": "EUNIV-RES-PE2", "b_interface": "GigabitEthernet2",
-         "label": "RES-AGG1 to RES-PE2"},
-        {"a_device": "EUNIV-RES-PE1", "a_interface": "GigabitEthernet3",
-         "b_device": "EUNIV-RES-PE2", "b_interface": "GigabitEthernet3",
-         "label": "RES-PE1 to RES-PE2 (HA)"}
+         "b_device": "EUNIV-RES-EDGE2", "b_interface": "GigabitEthernet2",
+         "label": "RES-AGG1 to RES-EDGE2"},
+        {"a_device": "EUNIV-RES-EDGE1", "a_interface": "GigabitEthernet3",
+         "b_device": "EUNIV-RES-EDGE2", "b_interface": "GigabitEthernet3",
+         "label": "RES-EDGE1 to RES-EDGE2 (HA)"}
     ],
 
     # -------------------------------------------------------------------------
@@ -660,22 +661,22 @@ CONFIG_CONTEXT = {
 MANAGEMENT_IPS = {
     # These should be updated with your actual CML/lab IP addresses
     # Format: "DEVICE_NAME": "IP/PREFIX"
-    "EUNIV-CORE1": "192.168.68.1/22",
-    "EUNIV-CORE2": "192.168.68.2/22",
-    "EUNIV-CORE3": "192.168.68.3/22",
-    "EUNIV-CORE4": "192.168.68.4/22",
-    "EUNIV-CORE5": "192.168.68.5/22",
-    "EUNIV-INET-GW1": "192.168.68.6/22",
-    "EUNIV-INET-GW2": "192.168.68.7/22",
-    "EUNIV-MAIN-AGG1": "192.168.68.10/22",
-    "EUNIV-MAIN-PE1": "192.168.68.11/22",
-    "EUNIV-MAIN-PE2": "192.168.68.12/22",
-    "EUNIV-MED-AGG1": "192.168.68.20/22",
-    "EUNIV-MED-PE1": "192.168.68.21/22",
-    "EUNIV-MED-PE2": "192.168.68.22/22",
-    "EUNIV-RES-AGG1": "192.168.68.30/22",
-    "EUNIV-RES-PE1": "192.168.68.31/22",
-    "EUNIV-RES-PE2": "192.168.68.32/22",
+    "EUNIV-CORE1": "192.168.68.201/22",
+    "EUNIV-CORE2": "192.168.68.202/22",
+    "EUNIV-CORE3": "192.168.68.203/22",
+    "EUNIV-CORE4": "192.168.68.204/22",
+    "EUNIV-CORE5": "192.168.68.205/22",
+    "EUNIV-INET-GW1": "192.168.68.206/22",
+    "EUNIV-INET-GW2": "192.168.68.207/22",
+    "EUNIV-MAIN-AGG1": "192.168.68.208/22",
+    "EUNIV-MAIN-EDGE1": "192.168.68.209/22",
+    "EUNIV-MAIN-EDGE2": "192.168.68.210/22",
+    "EUNIV-MED-AGG1": "192.168.68.211/22",
+    "EUNIV-MED-EDGE1": "192.168.68.212/22",
+    "EUNIV-MED-EDGE2": "192.168.68.213/22",
+    "EUNIV-RES-AGG1": "192.168.68.214/22",
+    "EUNIV-RES-EDGE1": "192.168.68.215/22",
+    "EUNIV-RES-EDGE2": "192.168.68.216/22",
 }
 
 
@@ -694,8 +695,8 @@ class EUnivNetBoxSetup:
             return "core"
         elif "AGG" in device_name:
             return "aggregation"
-        elif "PE" in device_name:
-            return "pe"
+        elif "EDGE" in device_name:
+            return "edge"
         elif "INET" in device_name:
             return "internet-gw"
         return "core"
