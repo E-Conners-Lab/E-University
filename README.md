@@ -126,7 +126,18 @@ This document defines the network architecture for E-University, a multi-campus 
 | EUNIV-RES-EDGE1 | Research Campus Edge | 10.255.3.11 | 192.168.68.215 | 65000 | CSR1000V |
 | EUNIV-RES-EDGE2 | Research Campus Edge | 10.255.3.12 | 192.168.68.216 | 65000 | CSR1000V |
 
-### 3.2 Device Counts by Role
+### 3.2 Host Router Inventory
+
+| Hostname | Role | Host IP | Gateway | Management IP | Connected To | Platform |
+|----------|------|---------|---------|---------------|--------------|----------|
+| HOST1 | Traffic Generator | 172.18.1.10 | 172.18.1.1 | 192.168.68.55 | RES-EDGE1 Gi6 | IOSv |
+| HOST2 | Traffic Generator | 172.18.2.10 | 172.18.2.1 | 192.168.68.74 | RES-EDGE2 Gi6 | IOSv |
+| HOST3 | Traffic Generator | 172.16.1.10 | 172.16.1.1 | 192.168.68.77 | MAIN-EDGE1 Gi4 | IOSv |
+| HOST4 | Traffic Generator | 172.16.2.10 | 172.16.2.1 | 192.168.68.78 | MAIN-EDGE2 Gi6 | IOSv |
+| HOST5 | Traffic Generator | 172.17.2.10 | 172.17.2.1 | 192.168.68.79 | MED-EDGE2 Gi6 | IOSv |
+| HOST6 | Traffic Generator | 172.17.1.10 | 172.17.1.1 | 192.168.68.80 | MED-EDGE1 Gi6 | IOSv |
+
+### 3.3 Device Counts by Role
 
 | Role | Count |
 |------|-------|
@@ -134,7 +145,7 @@ This document defines the network architecture for E-University, a multi-campus 
 | Internet Gateways | 2 |
 | Aggregation Routers | 3 |
 | Edge Routers | 6 |
-| Host Devices | 6 |
+| Host Routers | 6 |
 | **Total** | **22** |
 
 ---
@@ -207,16 +218,16 @@ This document defines the network architecture for E-University, a multi-campus 
 | 21 | EUNIV-RES-AGG1 | Gi5 | EUNIV-RES-EDGE2 | Gi2 | 10.0.3.12/30 |
 | 22 | EUNIV-RES-EDGE1 | Gi3 | EUNIV-RES-EDGE2 | Gi3 | 10.0.3.16/30 |
 
-#### Host Links
+#### Host Links (IOSv Routers)
 
-| Cable | Device A | Port A | Device B | Port B | Subnet |
-|-------|----------|--------|----------|--------|--------|
-| 23 | EUNIV-MAIN-EDGE1 | Gi6 | HOST1-STUDENT | eth0 | 172.16.1.0/24 |
-| 24 | EUNIV-MAIN-EDGE2 | Gi6 | HOST2-STAFF | eth0 | 172.16.2.0/24 |
-| 25 | EUNIV-MED-EDGE1 | Gi6 | HOST3-STUDENT | eth0 | 172.17.1.0/24 |
-| 26 | EUNIV-MED-EDGE2 | Gi6 | HOST4-STAFF | eth0 | 172.17.2.0/24 |
-| 27 | EUNIV-RES-EDGE1 | Gi6 | HOST5-STUDENT | eth0 | 172.18.1.0/24 |
-| 28 | EUNIV-RES-EDGE2 | Gi6 | HOST6-STAFF | eth0 | 172.18.2.0/24 |
+| Cable | Device A | Port A | Device B | Port B | Subnet | VRF |
+|-------|----------|--------|----------|--------|--------|-----|
+| 23 | EUNIV-RES-EDGE1 | Gi6 | HOST1 | Gi0/0 | 172.18.1.0/24 | STAFF-NET |
+| 24 | EUNIV-RES-EDGE2 | Gi6 | HOST2 | Gi0/0 | 172.18.2.0/24 | STAFF-NET |
+| 25 | EUNIV-MAIN-EDGE1 | Gi4 | HOST3 | Gi0/2 | 172.16.1.0/24 | STAFF-NET |
+| 26 | EUNIV-MAIN-EDGE2 | Gi6 | HOST4 | Gi0/0 | 172.16.2.0/24 | STAFF-NET |
+| 27 | EUNIV-MED-EDGE2 | Gi6 | HOST5 | Gi0/0 | 172.17.2.0/24 | STAFF-NET |
+| 28 | EUNIV-MED-EDGE1 | Gi6 | HOST6 | Gi0/0 | 172.17.1.0/24 | STAFF-NET |
 
 **Total Physical Links: 28**
 
@@ -592,7 +603,10 @@ line vty 0 15
 | `deploy_bfd.py` | Deploy BFD on OSPF/BGP interfaces (50ms interval, 3x multiplier) |
 | `deploy_inet.py` | Deploy Internet gateway BGP configuration |
 | `deploy_customer_traffic.py` | Deploy L3VPN/customer traffic on Edge routers |
+| `deploy_host_interfaces.py` | Configure Edge router Gi6 interfaces in STAFF-NET VRF |
+| `deploy_host_switches.py` | Configure IOSv host routers with IP SLA traffic generation |
 | `fix_edge.py` | Apply Edge router fixes and corrections |
+| `fix_vpnv4_rr.py` | Configure VPNv4 route-reflector-client on AGG routers |
 
 #### Verification Scripts
 
@@ -717,6 +731,7 @@ show ip route vrf <name>
 | 1.0 | 2025-11-27 | Network Team | Initial release |
 | 1.1 | 2025-12-02 | Network Team | Added BFD, deployment/verification scripts, EVE-NG integration, NetBox population docs |
 | 1.2 | 2025-12-02 | Network Team | Renamed PE routers to Edge routers, added Host layer with 6 Linux hosts for traffic generation |
+| 1.3 | 2025-12-02 | Network Team | Replaced Linux hosts with IOSv routers for traffic generation via IP SLA probes, fixed VPNv4 route reflection on AGG routers, added host deployment scripts |
 
 ---
 

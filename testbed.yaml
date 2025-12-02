@@ -183,3 +183,70 @@ devices:
         protocol: ssh
         ip: 192.168.68.216
         port: 22
+
+  # Host Switches (L2 IOSv) - Traffic Generators
+  HOST1:
+    os: ios
+    type: switch
+    connections:
+      defaults:
+        class: unicon.Unicon
+      ssh:
+        protocol: ssh
+        ip: 192.168.68.55
+        port: 22
+
+  HOST2:
+    os: ios
+    type: switch
+    connections:
+      defaults:
+        class: unicon.Unicon
+      ssh:
+        protocol: ssh
+        ip: 192.168.68.74
+        port: 22
+
+  HOST3:
+    os: ios
+    type: switch
+    connections:
+      defaults:
+        class: unicon.Unicon
+      ssh:
+        protocol: ssh
+        ip: 192.168.68.77
+        port: 22
+
+  HOST4:
+    os: ios
+    type: switch
+    connections:
+      defaults:
+        class: unicon.Unicon
+      ssh:
+        protocol: ssh
+        ip: 192.168.68.78
+        port: 22
+
+  HOST5:
+    os: ios
+    type: switch
+    connections:
+      defaults:
+        class: unicon.Unicon
+      ssh:
+        protocol: ssh
+        ip: 192.168.68.79
+        port: 22
+
+  HOST6:
+    os: ios
+    type: switch
+    connections:
+      defaults:
+        class: unicon.Unicon
+      ssh:
+        protocol: ssh
+        ip: 192.168.68.80
+        port: 22
