@@ -445,6 +445,63 @@ vrf definition STUDENT-NET
 - **STUDENT-NET**: CGNAT enabled for IPv4 address conservation
 - **GUEST-NET**: Internet-only access, no internal resources
 
+### 8.5 VRF Internet Access Configuration
+
+HOST devices in VRFs require internet access for updates, NTP, and external connectivity. This is implemented via **NAT on EDGE routers** using the management interface as the outside interface.
+
+#### Production Approach (MP-BGP Route Leaking)
+
+In a production environment, internet access for VRFs would be handled via MP-BGP:
+
+1. **INET-GW routers** advertise the default route with a specific route-target
+2. **EDGE routers** import the default route into customer VRFs via route-target
+
+```
+! On INET-GW1/GW2 - Advertise default to VRFs
+router bgp 65000
+ address-family vpnv4
+  neighbor 10.255.0.1 send-community extended
+ !
+ address-family ipv4 vrf STAFF-NET
+  redistribute static
+  default-information originate
+```
+
+#### Lab Implementation (Static Route + NAT)
+
+For this EVE-NG lab environment, internet access is provided via static routes and NAT on each EDGE router:
+
+```
+! Default route in VRF pointing to management gateway
+ip route vrf STAFF-NET 0.0.0.0 0.0.0.0 GigabitEthernet1 192.168.68.1
+
+! NAT configuration for internal networks
+ip access-list standard STAFF-NET-NAT
+ permit 172.18.0.0 0.0.255.255
+ permit 172.16.0.0 0.0.255.255
+ permit 172.17.0.0 0.0.255.255
+
+ip nat inside source list STAFF-NET-NAT interface GigabitEthernet1 vrf STAFF-NET overload
+
+! Interface NAT designations
+interface GigabitEthernet6
+ ip nat inside
+!
+interface GigabitEthernet1
+ ip nat outside
+```
+
+#### EDGE Router Internet Configuration Status
+
+| Router | Management IP | VRF | NAT Inside Interface | Status |
+|--------|---------------|-----|---------------------|--------|
+| RES-EDGE1 | 192.168.68.215 | STAFF-NET | Gi6 | Configured |
+| RES-EDGE2 | 192.168.68.216 | STAFF-NET | Gi6 | Configured |
+| MAIN-EDGE1 | 192.168.68.209 | STAFF-NET | Gi4 | Configured |
+| MAIN-EDGE2 | 192.168.68.210 | STAFF-NET | Gi6 | Configured |
+| MED-EDGE1 | 192.168.68.212 | STAFF-NET | Gi6 | Configured |
+| MED-EDGE2 | 192.168.68.213 | STAFF-NET | Gi6 | Configured |
+
 ---
 
 ## 9. Configuration Standards
@@ -624,6 +681,8 @@ line vty 0 15
 |--------|-----------|---------|
 | `traffic_test.py` | Netmiko | Fast end-to-end traffic test (~3s quick, ~60s full) |
 | `traffic_test_pyats.py` | pyATS/Genie | pyATS-based traffic test with structured parsing |
+| `pyats/tests/validate_network.py` | pyATS | Comprehensive network validation (OSPF, BGP, MPLS, VRF, traffic, internet) |
+| `pyats/scripts/shutdown_unused_interfaces.py` | pyATS | Admin shutdown unused interfaces on all devices |
 
 **Traffic Test Usage:**
 ```bash
@@ -760,6 +819,7 @@ show ip route vrf <name>
 | 1.2 | 2025-12-02 | Network Team | Renamed PE routers to Edge routers, added Host layer with 6 Linux hosts for traffic generation |
 | 1.3 | 2025-12-02 | Network Team | Replaced Linux hosts with IOSv routers for traffic generation via IP SLA probes, fixed VPNv4 route reflection on AGG routers, added host deployment scripts |
 | 1.4 | 2025-12-02 | Network Team | Added end-to-end traffic test scripts (Netmiko + pyATS versions) with JSON output for visualization, created pyATS host testbed |
+| 1.5 | 2025-12-02 | Network Team | Added comprehensive network validation test (validate_network.py), interface shutdown automation script |
 
 ---
 
