@@ -545,7 +545,7 @@ line vty 0 15
 ### 12.1 Source of Truth
 
 **NetBox** (Cloud-hosted)
-- URL: https://laji1722.cloud.netboxapp.com
+- URL: https://'<your-netbox-website-address>'
 - Contains: Device inventory, IPs, connections, custom fields
 
 ### 12.2 Configuration Pipeline
