@@ -119,11 +119,13 @@ devices:
         password: REDACTED
     os: iosxe
     type: router
-  EUNIV-MAIN-PE1:
+  EUNIV-MAIN-EDGE1:
     connections:
       cli:
         ip: 192.168.68.209
         protocol: ssh
+        arguments:
+          learn_hostname: True
       defaults:
         class: unicon.Unicon
     credentials:
@@ -134,11 +136,13 @@ devices:
         password: REDACTED
     os: iosxe
     type: router
-  EUNIV-MAIN-PE2:
+  EUNIV-MAIN-EDGE2:
     connections:
       cli:
         ip: 192.168.68.210
         protocol: ssh
+        arguments:
+          learn_hostname: True
       defaults:
         class: unicon.Unicon
     credentials:
@@ -164,11 +168,13 @@ devices:
         password: REDACTED
     os: iosxe
     type: router
-  EUNIV-MED-PE1:
+  EUNIV-MED-EDGE1:
     connections:
       cli:
         ip: 192.168.68.212
         protocol: ssh
+        arguments:
+          learn_hostname: True
       defaults:
         class: unicon.Unicon
     credentials:
@@ -179,11 +185,13 @@ devices:
         password: REDACTED
     os: iosxe
     type: router
-  EUNIV-MED-PE2:
+  EUNIV-MED-EDGE2:
     connections:
       cli:
         ip: 192.168.68.213
         protocol: ssh
+        arguments:
+          learn_hostname: True
       defaults:
         class: unicon.Unicon
     credentials:
@@ -209,11 +217,13 @@ devices:
         password: REDACTED
     os: iosxe
     type: router
-  EUNIV-RES-PE1:
+  EUNIV-RES-EDGE1:
     connections:
       cli:
         ip: 192.168.68.215
         protocol: ssh
+        arguments:
+          learn_hostname: True
       defaults:
         class: unicon.Unicon
     credentials:
@@ -224,11 +234,13 @@ devices:
         password: REDACTED
     os: iosxe
     type: router
-  EUNIV-RES-PE2:
+  EUNIV-RES-EDGE2:
     connections:
       cli:
         ip: 192.168.68.216
         protocol: ssh
+        arguments:
+          learn_hostname: True
       defaults:
         class: unicon.Unicon
     credentials:
