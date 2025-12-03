@@ -36,8 +36,12 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from typing import Optional
 
+import os
+from dotenv import load_dotenv
 from netmiko import ConnectHandler
 
+# Load environment variables
+load_dotenv()
 
 # Host configuration (matches deploy_host_switches.py)
 HOSTS = {
@@ -80,8 +84,8 @@ HOSTS = {
 }
 
 CREDENTIALS = {
-    "username": "admin",
-    "password": "REDACTED",
+    "username": os.getenv("DEVICE_USERNAME", "admin"),
+    "password": os.getenv("DEVICE_PASSWORD"),
 }
 
 # Test parameters

@@ -17,14 +17,19 @@ Author: E-University Network Team
 ═══════════════════════════════════════════════════════════════════════════════
 """
 
+import os
+from dotenv import load_dotenv
 from netmiko import ConnectHandler
 import re
 import sys
 import time
 import argparse
 
-USERNAME = "admin"
-PASSWORD = "REDACTED"
+# Load environment variables
+load_dotenv()
+
+USERNAME = os.getenv("DEVICE_USERNAME", "admin")
+PASSWORD = os.getenv("DEVICE_PASSWORD")
 
 DEVICES = {
     "CORE1": {"ip": "192.168.68.200", "loopback": "10.255.0.1"},

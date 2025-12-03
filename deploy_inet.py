@@ -6,18 +6,23 @@ Configures INET-GW1 and INET-GW2 with BGP for internet connectivity
 Run: python3 deploy_internet.py
 """
 
+import os
+from dotenv import load_dotenv
 from pyats.topology import loader
 import time
+
+# Load environment variables
+load_dotenv()
 
 TESTBED = """
 testbed:
   name: E-University-Internet
   credentials:
     default:
-      username: admin
-      password: REDACTED
+      username: "%ENV{{DEVICE_USERNAME}}"
+      password: "%ENV{{DEVICE_PASSWORD}}"
     enable:
-      password: REDACTED
+      password: "%ENV{{DEVICE_ENABLE_PASSWORD}}"
 
 devices:
   EUNIV-CORE1:

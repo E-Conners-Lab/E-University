@@ -4,18 +4,23 @@ E-University Network - Internet Connectivity Verification
 Verifies BGP sessions, default routes, and internet reachability
 """
 
+import os
+from dotenv import load_dotenv
 from pyats.topology import loader
 import re
+
+# Load environment variables
+load_dotenv()
 
 TESTBED = """
 testbed:
   name: E-University-Verify
   credentials:
     default:
-      username: admin
-      password: REDACTED
+      username: "%ENV{{DEVICE_USERNAME}}"
+      password: "%ENV{{DEVICE_PASSWORD}}"
     enable:
-      password: REDACTED
+      password: "%ENV{{DEVICE_ENABLE_PASSWORD}}"
 
 devices:
   EUNIV-CORE1:

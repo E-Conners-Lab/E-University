@@ -2,10 +2,10 @@ testbed:
   name: E-University Network
   credentials:
     default:
-      username: admin
-      password: REDACTED
+      username: "%ENV{DEVICE_USERNAME}"
+      password: "%ENV{DEVICE_PASSWORD}"
     enable:
-      password: REDACTED
+      password: "%ENV{DEVICE_ENABLE_PASSWORD}"
 
 devices:
   EUNIV-CORE1:

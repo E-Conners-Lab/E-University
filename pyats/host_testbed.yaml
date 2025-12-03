@@ -12,10 +12,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: ios
     type: router
     custom:
@@ -33,10 +33,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: ios
     type: router
     custom:
@@ -54,10 +54,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: ios
     type: router
     custom:
@@ -75,10 +75,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: ios
     type: router
     custom:
@@ -96,10 +96,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: ios
     type: router
     custom:
@@ -117,10 +117,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: ios
     type: router
     custom:

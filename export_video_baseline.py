@@ -16,14 +16,18 @@ Author: E-University Network Team
 ═══════════════════════════════════════════════════════════════════════════════
 """
 
-from netmiko import ConnectHandler
 import os
+from dotenv import load_dotenv
+from netmiko import ConnectHandler
 import base64
 from datetime import datetime
 import zipfile
 
-USERNAME = "admin"
-PASSWORD = "REDACTED"
+# Load environment variables
+load_dotenv()
+
+USERNAME = os.getenv("DEVICE_USERNAME", "admin")
+PASSWORD = os.getenv("DEVICE_PASSWORD")
 OUTPUT_DIR = "E-University-Baseline"
 
 # All 16 devices with EVE-NG positioning

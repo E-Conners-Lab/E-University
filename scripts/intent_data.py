@@ -5,6 +5,12 @@ This is the Source of Truth for device configurations.
 In production, this would come from NetBox via API.
 """
 
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 # Enterprise-wide settings
 ENTERPRISE = {
     "domain_name": "euniv.edu",
@@ -15,9 +21,9 @@ ENTERPRISE = {
     "snmp_contact": "noc@euniv.edu",
     "default_gateway": "192.168.68.1",
     "mgmt_mask": "255.255.252.0",
-    "username": "admin",
-    "password": "REDACTED",
-    "enable_secret": "REDACTED",
+    "username": os.getenv("DEVICE_USERNAME", "admin"),
+    "password": os.getenv("DEVICE_PASSWORD"),
+    "enable_secret": os.getenv("DEVICE_ENABLE_PASSWORD"),
 }
 
 # VRF Definitions

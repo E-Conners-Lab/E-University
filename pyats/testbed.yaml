@@ -8,10 +8,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-CORE2:
@@ -23,10 +23,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-CORE3:
@@ -38,10 +38,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-CORE4:
@@ -53,10 +53,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-CORE5:
@@ -68,10 +68,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-INET-GW1:
@@ -83,10 +83,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-INET-GW2:
@@ -98,10 +98,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-MAIN-AGG1:
@@ -113,10 +113,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-MAIN-EDGE1:
@@ -130,10 +130,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-MAIN-EDGE2:
@@ -147,10 +147,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-MED-AGG1:
@@ -162,10 +162,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-MED-EDGE1:
@@ -179,10 +179,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-MED-EDGE2:
@@ -196,10 +196,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-RES-AGG1:
@@ -211,10 +211,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-RES-EDGE1:
@@ -228,10 +228,10 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
   EUNIV-RES-EDGE2:
@@ -245,9 +245,9 @@ devices:
         class: unicon.Unicon
     credentials:
       default:
-        password: REDACTED
-        username: admin
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
       enable:
-        password: REDACTED
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
