@@ -449,6 +449,96 @@ BFD is most valuable at network edges where:
 1. **INET-GW links** - Fast detection of upstream ISP failures
 2. **AGG↔Edge links** - Fast PE failover for customer VRFs
 
+### 7.4 HSRP High Availability Design
+
+HSRP (Hot Standby Router Protocol) provides gateway redundancy for customer-facing VRF interfaces on PE router pairs.
+
+#### HSRP Implementation
+
+HSRP runs on **GigabitEthernet3 subinterfaces** - the existing inter-PE link. Using dot1q encapsulation, HSRP traffic rides over the same physical link that carries native routed OSPF/MPLS traffic. This eliminates the need for an additional L2 switch between PE pairs.
+
+#### HSRP Parameters
+
+| Parameter | Value |
+|-----------|-------|
+| Interface | GigabitEthernet3.{vlan} |
+| Version | HSRPv2 |
+| Hello Timer | 1 second |
+| Hold Timer | 3 seconds |
+| Preempt Delay | 30 seconds (primary only) |
+
+#### HSRP Groups by Campus
+
+**Main Campus (10.100.x.x)**
+| VLAN | VRF | Virtual IP | EDGE1 IP | EDGE2 IP |
+|------|-----|------------|----------|----------|
+| 100 | STUDENT-NET | 10.100.1.1 | 10.100.1.2 | 10.100.1.3 |
+| 200 | STAFF-NET | 10.100.2.1 | 10.100.2.2 | 10.100.2.3 |
+| 300 | RESEARCH-NET | 10.100.3.1 | 10.100.3.2 | 10.100.3.3 |
+| 500 | GUEST-NET | 10.100.5.1 | 10.100.5.2 | 10.100.5.3 |
+
+**Medical Campus (10.200.x.x)**
+| VLAN | VRF | Virtual IP | EDGE1 IP | EDGE2 IP |
+|------|-----|------------|----------|----------|
+| 200 | STAFF-NET | 10.200.2.1 | 10.200.2.2 | 10.200.2.3 |
+| 300 | RESEARCH-NET | 10.200.3.1 | 10.200.3.2 | 10.200.3.3 |
+| 400 | MEDICAL-NET | 10.200.4.1 | 10.200.4.2 | 10.200.4.3 |
+| 500 | GUEST-NET | 10.200.5.1 | 10.200.5.2 | 10.200.5.3 |
+
+**Research Campus (10.103.x.x)**
+| VLAN | VRF | Virtual IP | EDGE1 IP | EDGE2 IP |
+|------|-----|------------|----------|----------|
+| 200 | STAFF-NET | 10.103.2.1 | 10.103.2.2 | 10.103.2.3 |
+| 300 | RESEARCH-NET | 10.103.3.1 | 10.103.3.2 | 10.103.3.3 |
+| 500 | GUEST-NET | 10.103.5.1 | 10.103.5.2 | 10.103.5.3 |
+
+#### HSRP Configuration Example
+
+```
+interface GigabitEthernet3.200
+ description STAFF-NET Gateway (HSRP with EUNIV-MAIN-PE2)
+ encapsulation dot1Q 200
+ vrf forwarding STAFF-NET
+ ip address 10.100.2.2 255.255.255.0
+ standby version 2
+ standby 200 ip 10.100.2.1
+ standby 200 priority 110
+ standby 200 preempt delay minimum 30
+ standby 200 timers 1 3
+```
+
+#### HSRP Verification Commands
+
+```bash
+# Show HSRP summary
+show standby brief
+
+# Show detailed HSRP status
+show standby
+
+# Show HSRP for specific interface
+show standby GigabitEthernet3.200
+```
+
+#### How HSRP Works Over Gi3
+
+The native Gi3 interface remains a routed OSPF/MPLS point-to-point link:
+```
+interface GigabitEthernet3
+ ip address 10.0.2.17 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ mpls ip
+```
+
+HSRP subinterfaces are added on top with dot1q tagging:
+```
+interface GigabitEthernet3.200   ! VLAN 200 for STAFF-NET
+interface GigabitEthernet3.300   ! VLAN 300 for RESEARCH-NET
+```
+
+This allows both L3 routing (native) and L2 HSRP (tagged) to coexist on the same physical link.
+
 ---
 
 ## 8. VRF Design
@@ -717,6 +807,7 @@ The pyATS testbed files use `%ENV{VAR_NAME}` syntax to reference credentials fro
 | Script | Purpose |
 |--------|---------|
 | `configure_bfd.py` | Deploy BFD on edge links (100ms interval, 3x multiplier = 300ms detection) |
+| `configure_ha.py` | Deploy HSRP HA on PE router pairs (1s hello, 3s hold, HSRPv2) |
 | `deploy_inet.py` | Deploy Internet gateway BGP configuration |
 | `deploy_customer_traffic.py` | Deploy L3VPN/customer traffic on Edge routers |
 | `deploy_host_interfaces.py` | Configure Edge router Gi6 interfaces in STAFF-NET VRF |
@@ -742,7 +833,7 @@ The pyATS testbed files use `%ENV{VAR_NAME}` syntax to reference credentials fro
 | `traffic_test_pyats.py` | pyATS/Genie | pyATS-based traffic test with structured parsing |
 | `pyats/tests/validate_network.py` | pyATS | Comprehensive network validation (OSPF, BGP, MPLS, VRF, traffic, internet) |
 | `pyats/tests/test_euniv_network.py` | pyATS | Network validation tests with JSON output support |
-| `pyats/scripts/shutdown_unused_interfaces.py` | pyATS | Admin shutdown unused interfaces on all devices |
+| `scripts/shutdown_unused_interfaces.py` | pyATS | Admin shutdown unused Gi4 interfaces on EDGE devices |
 
 **Traffic Test Usage:**
 ```bash
@@ -917,6 +1008,8 @@ show bfd neighbors detail
 | 1.8 | 2025-12-02 | Network Team | Added HOST1-6 configs to baseline folder for complete lab deployment |
 | 1.9 | 2025-12-02 | Network Team | Added credential protection - credentials now use environment variables via .env file, removed from git history |
 | 2.0 | 2025-12-03 | Network Team | Deployed BFD on edge links (Core↔INET-GW, AGG↔Edge) with 300ms detection time, added BFD design section, updated pyATS validation tests |
+| 2.1 | 2025-12-03 | Network Team | Deployed HSRP HA on PE router pairs (HSRPv2, 1s hello, 3s hold), added Section 7.4 HSRP design, created configure_ha.py script |
+| 2.2 | 2025-12-03 | Network Team | Added shutdown_unused_interfaces.py script to admin shutdown Gi4 on EDGE devices (unused interfaces causing false alerts). Fixed CPU metric collection in network-monitor for CSR1000V (uses SNMP index .7 instead of .1). Added interactive D3.js topology map to network-monitor frontend. |
 
 ---
 
