@@ -116,10 +116,10 @@ This document defines the network architecture for E-University, a multi-campus 
 | EUNIV-CORE5 | Core / Route Reflector | 10.255.0.5 | 192.168.68.205 | 65000 | CSR1000V |
 | EUNIV-INET-GW1 | Internet Gateway | 10.255.0.101 | 192.168.68.206 | 65000 | CSR1000V |
 | EUNIV-INET-GW2 | Internet Gateway | 10.255.0.102 | 192.168.68.207 | 65000 | CSR1000V |
-| EUNIV-MAIN-AGG1 | Main Campus Aggregation | 10.255.1.1 | 192.168.68.211 | 65000 | CSR1000V |
+| EUNIV-MAIN-AGG1 | Main Campus Aggregation | 10.255.1.1 | 192.168.68.208 | 65000 | CSR1000V |
 | EUNIV-MAIN-EDGE1 | Main Campus Edge | 10.255.1.11 | 192.168.68.209 | 65000 | CSR1000V |
 | EUNIV-MAIN-EDGE2 | Main Campus Edge | 10.255.1.12 | 192.168.68.210 | 65000 | CSR1000V |
-| EUNIV-MED-AGG1 | Medical Campus Aggregation | 10.255.2.1 | 192.168.68.208 | 65000 | CSR1000V |
+| EUNIV-MED-AGG1 | Medical Campus Aggregation | 10.255.2.1 | 192.168.68.211 | 65000 | CSR1000V |
 | EUNIV-MED-EDGE1 | Medical Campus Edge | 10.255.2.11 | 192.168.68.212 | 65000 | CSR1000V |
 | EUNIV-MED-EDGE2 | Medical Campus Edge | 10.255.2.12 | 192.168.68.213 | 65000 | CSR1000V |
 | EUNIV-RES-AGG1 | Research Campus Aggregation | 10.255.3.1 | 192.168.68.214 | 65000 | CSR1000V |
@@ -770,9 +770,16 @@ The project includes complete EVE-NG lab configurations:
 
 | Directory | Contents |
 |-----------|----------|
+| `E-University-Baseline/configs/` | 22 complete baseline configs (16 network + 6 HOST devices) |
 | `eve-ng/TOPOLOGY_GUIDE.md` | Full cabling guide with interface mappings |
 | `eve-ng/startup-configs/` | 16 minimal startup configs for initial boot |
 | `eve-ng/full-configs/` | 16 complete configs with all protocols |
+
+**Baseline Configs Include:**
+- 16 Network devices: CORE1-5, INET-GW1-2, AGG1 (x3), PE1-2 (x3 campuses)
+- 6 HOST devices: HOST1-6 (IOSv routers for traffic generation)
+- All devices configured with static management IPs (192.168.68.x)
+- Complete OSPF, BGP, MPLS, VRF configurations
 
 ```bash
 # Generate startup configs
@@ -837,6 +844,8 @@ show ip route vrf <name>
 | 1.4 | 2025-12-02 | Network Team | Added end-to-end traffic test scripts (Netmiko + pyATS versions) with JSON output for visualization, created pyATS host testbed |
 | 1.5 | 2025-12-02 | Network Team | Added comprehensive network validation test (validate_network.py), interface shutdown automation script |
 | 1.6 | 2025-12-02 | Network Team | Added JSON output support to test_euniv_network.py for exporting test results |
+| 1.7 | 2025-12-02 | Network Team | Configured static management IPs on all devices (previously DHCP), updated baseline configs |
+| 1.8 | 2025-12-02 | Network Team | Added HOST1-6 configs to baseline folder for complete lab deployment |
 
 ---
 

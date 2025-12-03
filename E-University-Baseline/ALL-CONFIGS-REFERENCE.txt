@@ -1,0 +1,5049 @@
+================================================================================
+E-UNIVERSITY NETWORK - COMPLETE CONFIGURATION REFERENCE
+Exported: 2025-11-28 16:04:28
+================================================================================
+
+TABLE OF CONTENTS:
+----------------------------------------
+   1. EUNIV-CORE1 - Route Reflector
+   2. EUNIV-CORE2 - Route Reflector
+   3. EUNIV-CORE3 - P Router
+   4. EUNIV-CORE4 - P Router
+   5. EUNIV-CORE5 - P Router
+   6. EUNIV-INET-GW1 - Internet Gateway (Primary)
+   7. EUNIV-INET-GW2 - Internet Gateway (Backup)
+   8. EUNIV-MAIN-AGG1 - Main Campus Aggregation
+   9. EUNIV-MAIN-PE1 - Main Campus PE
+  10. EUNIV-MAIN-PE2 - Main Campus PE
+  11. EUNIV-MED-AGG1 - Medical Campus Aggregation
+  12. EUNIV-MED-PE1 - Medical Campus PE
+  13. EUNIV-MED-PE2 - Medical Campus PE
+  14. EUNIV-RES-AGG1 - Research Campus Aggregation
+  15. EUNIV-RES-PE1 - Research Campus PE
+  16. EUNIV-RES-PE2 - Research Campus PE
+
+
+================================================================================
+  EUNIV-CORE1
+  Role: Route Reflector
+  Management IP: 192.168.68.200
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-CORE1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$MXVo8ObyJmnR4U$/2qiv6AefbunZKGSVoWQMNHdXz72lTjzJDKKAt2OCds
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-2853406492
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-2853406492
+ revocation-check none
+ rsakeypair TP-self-signed-2853406492
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+!
+license udi pid CSR1000V sn 96BUTCKV7WR
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$dercO6YEs5qapU$Mi19eduMXKBZNqXFB1gHmbGy9lh5KmETot2ZXpIq0.2
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.0.1 255.255.255.255
+ ip ospf 1 area 0
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 96BUTCKV7WR
+ ip address 192.168.68.200 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-CORE2
+ ip address 10.0.0.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-CORE5
+ ip address 10.0.0.18 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ description To EUNIV-INET-GW1
+ ip address 10.0.0.21 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet5
+ description To EUNIV-MAIN-AGG1
+ ip address 10.0.1.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet6
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet7
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet8
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.0.1
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.0.1
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description CORE2-RR
+ neighbor 10.255.0.2 update-source Loopback0
+ neighbor 10.255.0.101 remote-as 65000
+ neighbor 10.255.0.101 description INET-GW1
+ neighbor 10.255.0.101 update-source Loopback0
+ neighbor 10.255.0.102 remote-as 65000
+ neighbor 10.255.0.102 description INET-GW2
+ neighbor 10.255.0.102 update-source Loopback0
+ neighbor 10.255.1.11 remote-as 65000
+ neighbor 10.255.1.11 description MAIN-PE1
+ neighbor 10.255.1.11 update-source Loopback0
+ neighbor 10.255.1.12 remote-as 65000
+ neighbor 10.255.1.12 description MAIN-PE2
+ neighbor 10.255.1.12 update-source Loopback0
+ neighbor 10.255.2.11 remote-as 65000
+ neighbor 10.255.2.11 description MED-PE1
+ neighbor 10.255.2.11 update-source Loopback0
+ neighbor 10.255.2.12 remote-as 65000
+ neighbor 10.255.2.12 description MED-PE2
+ neighbor 10.255.2.12 update-source Loopback0
+ neighbor 10.255.3.11 remote-as 65000
+ neighbor 10.255.3.11 description RES-PE1
+ neighbor 10.255.3.11 update-source Loopback0
+ neighbor 10.255.3.12 remote-as 65000
+ neighbor 10.255.3.12 description RES-PE2
+ neighbor 10.255.3.12 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community both
+  neighbor 10.255.0.101 activate
+  neighbor 10.255.0.101 send-community both
+  neighbor 10.255.0.101 route-reflector-client
+  neighbor 10.255.0.102 activate
+  neighbor 10.255.0.102 send-community both
+  neighbor 10.255.0.102 route-reflector-client
+  neighbor 10.255.1.11 activate
+  neighbor 10.255.1.11 send-community both
+  neighbor 10.255.1.11 route-reflector-client
+  neighbor 10.255.1.12 activate
+  neighbor 10.255.1.12 send-community both
+  neighbor 10.255.1.12 route-reflector-client
+  neighbor 10.255.2.11 activate
+  neighbor 10.255.2.11 send-community both
+  neighbor 10.255.2.11 route-reflector-client
+  neighbor 10.255.2.12 activate
+  neighbor 10.255.2.12 send-community both
+  neighbor 10.255.2.12 route-reflector-client
+  neighbor 10.255.3.11 activate
+  neighbor 10.255.3.11 send-community both
+  neighbor 10.255.3.11 route-reflector-client
+  neighbor 10.255.3.12 activate
+  neighbor 10.255.3.12 send-community both
+  neighbor 10.255.3.12 route-reflector-client
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community both
+  neighbor 10.255.1.11 activate
+  neighbor 10.255.1.11 send-community both
+  neighbor 10.255.1.11 route-reflector-client
+  neighbor 10.255.1.12 activate
+  neighbor 10.255.1.12 send-community both
+  neighbor 10.255.1.12 route-reflector-client
+  neighbor 10.255.2.11 activate
+  neighbor 10.255.2.11 send-community both
+  neighbor 10.255.2.11 route-reflector-client
+  neighbor 10.255.2.12 activate
+  neighbor 10.255.2.12 send-community both
+  neighbor 10.255.2.12 route-reflector-client
+  neighbor 10.255.3.11 activate
+  neighbor 10.255.3.11 send-community both
+  neighbor 10.255.3.11 route-reflector-client
+  neighbor 10.255.3.12 activate
+  neighbor 10.255.3.12 send-community both
+  neighbor 10.255.3.12 route-reflector-client
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip tftp source-interface GigabitEthernet1
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-CORE2
+  Role: Route Reflector
+  Management IP: 192.168.68.202
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-CORE2
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$9MSiIlwJ6VLIu.$z.HvhfV9hvr5MN9JLBcHb7mLnvI9WKeWP4fE9Yj3BZo
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-706912438
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-706912438
+ revocation-check none
+ rsakeypair TP-self-signed-706912438
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+!
+license udi pid CSR1000V sn 9KUG1UPSIOP
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$CL4kVD88/S4Pb.$haP5GiVycidxEv4RYVE.Zg9fkm4uGVJQFfhZ0ky7ik2
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.0.2 255.255.255.255
+ ip ospf 1 area 0
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 9KUG1UPSIOP
+ ip address 192.168.68.202 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-CORE1
+ ip address 10.0.0.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-CORE3
+ ip address 10.0.0.5 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ description To EUNIV-INET-GW2
+ ip address 10.0.0.25 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet5
+ description To EUNIV-MAIN-AGG1
+ ip address 10.0.1.5 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet6
+ description To EUNIV-MED-AGG1
+ ip address 10.0.2.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet7
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet8
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.0.2
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.0.2
+ bgp cluster-id 10.255.0.12
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description CORE1-RR
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.3 remote-as 65000
+ neighbor 10.255.0.3 description EUNIV-CORE3
+ neighbor 10.255.0.3 update-source Loopback0
+ neighbor 10.255.0.4 remote-as 65000
+ neighbor 10.255.0.4 description EUNIV-CORE4
+ neighbor 10.255.0.4 update-source Loopback0
+ neighbor 10.255.0.5 remote-as 65000
+ neighbor 10.255.0.5 description EUNIV-CORE5
+ neighbor 10.255.0.5 update-source Loopback0
+ neighbor 10.255.0.101 remote-as 65000
+ neighbor 10.255.0.101 description INET-GW1
+ neighbor 10.255.0.101 update-source Loopback0
+ neighbor 10.255.0.102 remote-as 65000
+ neighbor 10.255.0.102 description INET-GW2
+ neighbor 10.255.0.102 update-source Loopback0
+ neighbor 10.255.1.1 remote-as 65000
+ neighbor 10.255.1.1 description EUNIV-MAIN-AGG1
+ neighbor 10.255.1.1 update-source Loopback0
+ neighbor 10.255.1.11 remote-as 65000
+ neighbor 10.255.1.11 description MAIN-PE1
+ neighbor 10.255.1.11 update-source Loopback0
+ neighbor 10.255.1.12 remote-as 65000
+ neighbor 10.255.1.12 description MAIN-PE2
+ neighbor 10.255.1.12 update-source Loopback0
+ neighbor 10.255.2.1 remote-as 65000
+ neighbor 10.255.2.1 description EUNIV-MED-AGG1
+ neighbor 10.255.2.1 update-source Loopback0
+ neighbor 10.255.2.11 remote-as 65000
+ neighbor 10.255.2.11 description MED-PE1
+ neighbor 10.255.2.11 update-source Loopback0
+ neighbor 10.255.2.12 remote-as 65000
+ neighbor 10.255.2.12 description MED-PE2
+ neighbor 10.255.2.12 update-source Loopback0
+ neighbor 10.255.3.11 remote-as 65000
+ neighbor 10.255.3.11 description RES-PE1
+ neighbor 10.255.3.11 update-source Loopback0
+ neighbor 10.255.3.12 remote-as 65000
+ neighbor 10.255.3.12 description RES-PE2
+ neighbor 10.255.3.12 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community both
+  neighbor 10.255.0.1 route-reflector-client
+  neighbor 10.255.0.3 activate
+  neighbor 10.255.0.3 send-community both
+  neighbor 10.255.0.3 route-reflector-client
+  neighbor 10.255.0.4 activate
+  neighbor 10.255.0.4 send-community both
+  neighbor 10.255.0.4 route-reflector-client
+  neighbor 10.255.0.5 activate
+  neighbor 10.255.0.5 send-community both
+  neighbor 10.255.0.5 route-reflector-client
+  neighbor 10.255.0.101 activate
+  neighbor 10.255.0.101 send-community both
+  neighbor 10.255.0.101 route-reflector-client
+  neighbor 10.255.0.102 activate
+  neighbor 10.255.0.102 send-community both
+  neighbor 10.255.0.102 route-reflector-client
+  neighbor 10.255.1.1 activate
+  neighbor 10.255.1.1 send-community both
+  neighbor 10.255.1.1 route-reflector-client
+  neighbor 10.255.1.11 activate
+  neighbor 10.255.1.11 send-community both
+  neighbor 10.255.1.11 route-reflector-client
+  neighbor 10.255.1.12 activate
+  neighbor 10.255.1.12 send-community both
+  neighbor 10.255.1.12 route-reflector-client
+  neighbor 10.255.2.1 activate
+  neighbor 10.255.2.1 send-community both
+  neighbor 10.255.2.1 route-reflector-client
+  neighbor 10.255.2.11 activate
+  neighbor 10.255.2.11 send-community both
+  neighbor 10.255.2.11 route-reflector-client
+  neighbor 10.255.2.12 activate
+  neighbor 10.255.2.12 send-community both
+  neighbor 10.255.2.12 route-reflector-client
+  neighbor 10.255.3.11 activate
+  neighbor 10.255.3.11 send-community both
+  neighbor 10.255.3.11 route-reflector-client
+  neighbor 10.255.3.12 activate
+  neighbor 10.255.3.12 send-community both
+  neighbor 10.255.3.12 route-reflector-client
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community both
+  neighbor 10.255.0.1 route-reflector-client
+  neighbor 10.255.0.3 activate
+  neighbor 10.255.0.3 send-community extended
+  neighbor 10.255.0.3 route-reflector-client
+  neighbor 10.255.0.4 activate
+  neighbor 10.255.0.4 send-community extended
+  neighbor 10.255.0.4 route-reflector-client
+  neighbor 10.255.0.5 activate
+  neighbor 10.255.0.5 send-community extended
+  neighbor 10.255.0.5 route-reflector-client
+  neighbor 10.255.0.101 activate
+  neighbor 10.255.0.101 send-community extended
+  neighbor 10.255.0.101 route-reflector-client
+  neighbor 10.255.0.102 activate
+  neighbor 10.255.0.102 send-community extended
+  neighbor 10.255.0.102 route-reflector-client
+  neighbor 10.255.1.1 activate
+  neighbor 10.255.1.1 send-community extended
+  neighbor 10.255.1.1 route-reflector-client
+  neighbor 10.255.1.11 activate
+  neighbor 10.255.1.11 send-community both
+  neighbor 10.255.1.11 route-reflector-client
+  neighbor 10.255.1.12 activate
+  neighbor 10.255.1.12 send-community both
+  neighbor 10.255.1.12 route-reflector-client
+  neighbor 10.255.2.1 activate
+  neighbor 10.255.2.1 send-community extended
+  neighbor 10.255.2.1 route-reflector-client
+  neighbor 10.255.2.11 activate
+  neighbor 10.255.2.11 send-community both
+  neighbor 10.255.2.11 route-reflector-client
+  neighbor 10.255.2.12 activate
+  neighbor 10.255.2.12 send-community both
+  neighbor 10.255.2.12 route-reflector-client
+  neighbor 10.255.3.11 activate
+  neighbor 10.255.3.11 send-community both
+  neighbor 10.255.3.11 route-reflector-client
+  neighbor 10.255.3.12 activate
+  neighbor 10.255.3.12 send-community both
+  neighbor 10.255.3.12 route-reflector-client
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip tftp source-interface GigabitEthernet1
+ip route 0.0.0.0 0.0.0.0 192.168.68.1
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-CORE3
+  Role: P Router
+  Management IP: 192.168.68.203
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-CORE3
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$RGk/geBUbpEAik$iq/y8yr42SOT.A9eUWvQZsCHZ/nv1Hm7sZ3zlE3QshQ
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+crypto pki trustpoint TP-self-signed-635829580
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-635829580
+ revocation-check none
+ rsakeypair TP-self-signed-635829580
+!
+!
+!
+license udi pid CSR1000V sn 983HM23LRHT
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$ADunATZamfP2jk$bWCYIu.MsLfag7YFA4CQx3dSQ2fV8RlrSeJHSvXicnA
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.0.3 255.255.255.255
+ ip ospf 1 area 0
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 983HM23LRHT
+ ip address 192.168.68.203 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-CORE2
+ ip address 10.0.0.6 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-CORE4
+ ip address 10.0.0.9 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ description To EUNIV-MED-AGG1
+ ip address 10.0.2.5 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.0.3
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.0.3
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description EUNIV-CORE1 (RR)
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description EUNIV-CORE2 (RR)
+ neighbor 10.255.0.2 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community both
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community both
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community extended
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip route 0.0.0.0 0.0.0.0 192.168.68.1
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-CORE4
+  Role: P Router
+  Management IP: 192.168.68.204
+================================================================================
+
+
+!
+!
+version 17.3
+service config
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-CORE4
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$y7GWVfOIhdWaXU$qnXxi4bOMDFNMjde/QEaSHs/8y5YlVEvnLiXgHvhVZg
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-1859597097
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-1859597097
+ revocation-check none
+ rsakeypair TP-self-signed-1859597097
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+!
+license udi pid CSR1000V sn 9XI6I960QN3
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$5sZB0DvUCT3rb.$A4o7ZlLvPGfy4FVUM3S7uXoxdbSzzKoVlTm8A8LneS.
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.0.4 255.255.255.255
+ ip ospf 1 area 0
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 9XI6I960QN3
+ ip address 192.168.68.204 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-CORE3
+ ip address 10.0.0.10 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-CORE5
+ ip address 10.0.0.13 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ description To EUNIV-RES-AGG1
+ ip address 10.0.3.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet5
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet6
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet7
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet8
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet9
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet10
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.0.4
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.0.4
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description EUNIV-CORE1 (RR)
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.5 remote-as 65000
+ neighbor 10.255.0.5 description EUNIV-CORE5 (RR)
+ neighbor 10.255.0.5 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community both
+  neighbor 10.255.0.5 activate
+  neighbor 10.255.0.5 send-community both
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.5 activate
+  neighbor 10.255.0.5 send-community extended
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip route 0.0.0.0 0.0.0.0 192.168.68.1
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-CORE5
+  Role: P Router
+  Management IP: 192.168.68.205
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-CORE5
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$a09by38FckmOIk$Q.LoGk9qxu6im9PiwC34XAN.2CprNkOeaX6/XfKBQxI
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+crypto pki trustpoint TP-self-signed-2026312675
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-2026312675
+ revocation-check none
+ rsakeypair TP-self-signed-2026312675
+!
+!
+!
+license udi pid CSR1000V sn 9TLIUH29O4A
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$xtKjk/aGhjoD0U$0kZquz3fyIVPgkWZIjsX8GXFHxPCh.UABK4bfAmyHto
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.0.5 255.255.255.255
+ ip ospf 1 area 0
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 9TLIUH29O4A
+ ip address 192.168.68.205 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-CORE4
+ ip address 10.0.0.14 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-CORE1
+ ip address 10.0.0.17 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ description To EUNIV-RES-AGG1
+ ip address 10.0.3.5 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.0.5
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.0.5
+ bgp cluster-id 10.255.0.5
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description EUNIV-CORE1
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description EUNIV-CORE2
+ neighbor 10.255.0.2 update-source Loopback0
+ neighbor 10.255.0.3 remote-as 65000
+ neighbor 10.255.0.3 description EUNIV-CORE3
+ neighbor 10.255.0.3 update-source Loopback0
+ neighbor 10.255.0.4 remote-as 65000
+ neighbor 10.255.0.4 description EUNIV-CORE4
+ neighbor 10.255.0.4 update-source Loopback0
+ neighbor 10.255.3.1 remote-as 65000
+ neighbor 10.255.3.1 description EUNIV-RES-AGG1
+ neighbor 10.255.3.1 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community both
+  neighbor 10.255.0.1 route-reflector-client
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community both
+  neighbor 10.255.0.2 route-reflector-client
+  neighbor 10.255.0.3 activate
+  neighbor 10.255.0.3 send-community both
+  neighbor 10.255.0.3 route-reflector-client
+  neighbor 10.255.0.4 activate
+  neighbor 10.255.0.4 send-community both
+  neighbor 10.255.0.4 route-reflector-client
+  neighbor 10.255.3.1 activate
+  neighbor 10.255.3.1 send-community both
+  neighbor 10.255.3.1 route-reflector-client
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.1 route-reflector-client
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community extended
+  neighbor 10.255.0.2 route-reflector-client
+  neighbor 10.255.0.3 activate
+  neighbor 10.255.0.3 send-community extended
+  neighbor 10.255.0.3 route-reflector-client
+  neighbor 10.255.0.4 activate
+  neighbor 10.255.0.4 send-community extended
+  neighbor 10.255.0.4 route-reflector-client
+  neighbor 10.255.3.1 activate
+  neighbor 10.255.3.1 send-community extended
+  neighbor 10.255.3.1 route-reflector-client
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip route 0.0.0.0 0.0.0.0 192.168.68.1
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-INET-GW1
+  Role: Internet Gateway (Primary)
+  Management IP: 192.168.68.206
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-INET-GW1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$NjqBtIHK1Zw51.$Ad3TWQdoj7rmgGKPlbw4btarA8nKj2PSlIc3jdKpm8o
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+crypto pki trustpoint TP-self-signed-2372232501
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-2372232501
+ revocation-check none
+ rsakeypair TP-self-signed-2372232501
+!
+!
+!
+license udi pid CSR1000V sn 959J13MYKZC
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$hLzPboVmi1zWgE$DO3SfbALfChEgtFTsOD.EJdaWtuZCadV.GtTs1P16AQ
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.0.101 255.255.255.255
+ ip ospf 1 area 0
+!
+interface Loopback201
+ description E-University-Public-Prefix
+ ip address 198.51.100.1 255.255.255.0
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 959J13MYKZC
+ ip address 192.168.68.206 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-CORE1
+ ip address 10.0.0.22 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ description TO-NAT-CLOUD
+ no ip address
+ ip nat outside
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet5
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet6
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet7
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet8
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.0.101
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.0.11
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description CORE1-RR
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description CORE2-RR
+ neighbor 10.255.0.2 update-source Loopback0
+ !
+ address-family ipv4
+  network 0.0.0.0
+  network 1.1.1.1 mask 255.255.255.255
+  network 8.8.8.8 mask 255.255.255.255
+  network 93.184.216.34 mask 255.255.255.255
+  network 198.51.100.0
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community both
+  neighbor 10.255.0.1 route-map PRIMARY-OUT out
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community both
+  neighbor 10.255.0.2 route-map PRIMARY-OUT out
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community extended
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip nat inside source list NAT_ACL interface GigabitEthernet4 overload
+ip route 0.0.0.0 0.0.0.0 192.168.68.1
+ip route 198.51.100.0 255.255.255.0 Null0 name PUBLIC-PREFIX
+ip ssh version 2
+!
+ip access-list standard NAT_ACL
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 172.16.0.0 0.15.255.255
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+route-map PRIMARY-OUT permit 10 
+ set local-preference 200
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-INET-GW2
+  Role: Internet Gateway (Backup)
+  Management IP: 192.168.68.207
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-INET-GW2
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$tMXCFpv6MC4r2E$ymqZTQq/SvBvp2IW7OHHDsoGQ5ce0L.zb1gq/p1DviQ
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-3530618426
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-3530618426
+ revocation-check none
+ rsakeypair TP-self-signed-3530618426
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+!
+license udi pid CSR1000V sn 9TBY46SAU5C
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$Ix7qzDM.KxXUw.$GWxXVNkIvqJoHnv82jDvtx6/GpgHNPT1MIg4LO75p9c
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.0.102 255.255.255.255
+ ip ospf 1 area 0
+!
+interface Loopback201
+ description E-University-Public-Secondary
+ ip address 198.51.100.2 255.255.255.0
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 9TBY46SAU5C
+ ip address 192.168.68.207 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-CORE2
+ ip address 10.0.0.26 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.0.102
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.0.12
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description CORE1-RR
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description CORE2-RR
+ neighbor 10.255.0.2 update-source Loopback0
+ !
+ address-family ipv4
+  network 0.0.0.0
+  network 8.8.4.4 mask 255.255.255.255
+  network 9.9.9.9 mask 255.255.255.255
+  network 198.51.100.0
+  network 208.67.222.222 mask 255.255.255.255
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community both
+  neighbor 10.255.0.1 route-map BACKUP-OUT out
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community both
+  neighbor 10.255.0.2 route-map BACKUP-OUT out
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community extended
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip route 0.0.0.0 0.0.0.0 192.168.68.1
+ip route 0.0.0.0 0.0.0.0 Null0 name INTERNET-DEFAULT-BACKUP
+ip route 198.51.100.0 255.255.255.0 Null0 name PUBLIC-PREFIX
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+route-map BACKUP-OUT permit 10 
+ set local-preference 100
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-MAIN-AGG1
+  Role: Main Campus Aggregation
+  Management IP: 192.168.68.208
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-MAIN-AGG1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$GU7Ag50tIzhf6E$KNWUTktBDZXshwOaBhEALNLxwhsK/RQTi7LN3g.1dVY
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-169358702
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-169358702
+ revocation-check none
+ rsakeypair TP-self-signed-169358702
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+!
+license udi pid CSR1000V sn 9Q4F5K0G25K
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$jDBTR20.Gk2WYk$.zVkGoI8EXXyZoKENP4WM7f6lx9k5Kjd.RjAkOg0Ero
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.1.1 255.255.255.255
+ ip ospf 1 area 0
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 9Q4F5K0G25K
+ ip address 192.168.68.208 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-CORE1
+ ip address 10.0.1.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-CORE2
+ ip address 10.0.1.6 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ description To EUNIV-MAIN-PE1
+ ip address 10.0.1.9 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet5
+ description To EUNIV-MAIN-PE2
+ ip address 10.0.1.13 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet6
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet7
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet8
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet9
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet10
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.1.1
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.1.1
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description EUNIV-CORE1 (RR)
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description EUNIV-CORE2 (RR)
+ neighbor 10.255.0.2 update-source Loopback0
+ neighbor 10.255.1.11 remote-as 65000
+ neighbor 10.255.1.11 description EUNIV-MAIN-PE1
+ neighbor 10.255.1.11 update-source Loopback0
+ neighbor 10.255.1.12 remote-as 65000
+ neighbor 10.255.1.12 description EUNIV-MAIN-PE2
+ neighbor 10.255.1.12 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community both
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community both
+  neighbor 10.255.1.11 activate
+  neighbor 10.255.1.11 send-community both
+  neighbor 10.255.1.12 activate
+  neighbor 10.255.1.12 send-community both
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community extended
+  neighbor 10.255.1.11 activate
+  neighbor 10.255.1.11 send-community extended
+  neighbor 10.255.1.12 activate
+  neighbor 10.255.1.12 send-community extended
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip tftp source-interface GigabitEthernet1
+ip route 0.0.0.0 0.0.0.0 192.168.68.1
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-MAIN-PE1
+  Role: Main Campus PE
+  Management IP: 192.168.68.209
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-MAIN-PE1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition GUEST-NET
+ description Guest/visitor network
+ rd 10.255.1.11:500
+ !
+ address-family ipv4
+  route-target export 65000:500
+  route-target import 65000:500
+ exit-address-family
+!
+vrf definition RESEARCH-NET
+ description Research partner network
+ rd 10.255.1.11:300
+ !
+ address-family ipv4
+  route-target export 65000:300
+  route-target import 65000:300
+ exit-address-family
+!
+vrf definition STAFF-NET
+ description Staff and faculty network
+ rd 10.255.1.11:200
+ !
+ address-family ipv4
+  route-target export 65000:200
+  route-target import 65000:200
+ exit-address-family
+!
+vrf definition STUDENT-NET
+ description Student residential network
+ rd 10.255.1.11:100
+ !
+ address-family ipv4
+  route-target export 65000:100
+  route-target import 65000:100
+ exit-address-family
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$Dpkt.BbPF4iX1E$WJNeHeddLB2f6w3gQVQ3qC0VQpBVoGPtg3TTXM8O0Dk
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-2683656817
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-2683656817
+ revocation-check none
+ rsakeypair TP-self-signed-2683656817
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+!
+license udi pid CSR1000V sn 90DE8FHV3T7
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$.rAv2EN9bNmDBE$dGj.n85lUfMFT0xS2jcIoyvMF1nvOnnpRl5twoqqHxY
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.1.11 255.255.255.255
+ ip ospf 1 area 0
+!
+interface Loopback100
+ description STUDENT-NET Test Loopback
+ vrf forwarding STUDENT-NET
+ ip address 172.10.0.1 255.255.255.255
+!
+interface Loopback200
+ description STAFF-NET Test Loopback
+ vrf forwarding STAFF-NET
+ ip address 172.20.0.1 255.255.255.255
+!
+interface Loopback300
+ description RESEARCH-NET Test Loopback
+ vrf forwarding RESEARCH-NET
+ ip address 172.30.0.1 255.255.255.255
+!
+interface Loopback500
+ description GUEST-NET Test Loopback
+ vrf forwarding GUEST-NET
+ ip address 172.50.0.1 255.255.255.255
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 90DE8FHV3T7
+ ip address 192.168.68.209 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-MAIN-AGG1
+ ip address 10.0.1.10 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-MAIN-PE2 (HA)
+ ip address 10.0.1.17 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.1.11
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.1.11
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description CORE1-RR
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description CORE2-RR
+ neighbor 10.255.0.2 update-source Loopback0
+ neighbor 10.255.1.1 remote-as 65000
+ neighbor 10.255.1.1 description EUNIV-MAIN-AGG1
+ neighbor 10.255.1.1 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.1.1 activate
+  neighbor 10.255.1.1 send-community both
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community extended
+  neighbor 10.255.1.1 activate
+  neighbor 10.255.1.1 send-community extended
+ exit-address-family
+ !
+ address-family ipv4 vrf GUEST-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf RESEARCH-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf STAFF-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf STUDENT-NET
+  redistribute connected
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-MAIN-PE2
+  Role: Main Campus PE
+  Management IP: 192.168.68.210
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-MAIN-PE2
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition GUEST-NET
+ description Guest/visitor network
+ rd 10.255.1.12:500
+ !
+ address-family ipv4
+  route-target export 65000:500
+  route-target import 65000:500
+ exit-address-family
+!
+vrf definition RESEARCH-NET
+ description Research partner network
+ rd 10.255.1.12:300
+ !
+ address-family ipv4
+  route-target export 65000:300
+  route-target import 65000:300
+ exit-address-family
+!
+vrf definition STAFF-NET
+ description Staff and faculty network
+ rd 10.255.1.12:200
+ !
+ address-family ipv4
+  route-target export 65000:200
+  route-target import 65000:200
+ exit-address-family
+!
+vrf definition STUDENT-NET
+ description Student residential network
+ rd 10.255.1.12:100
+ !
+ address-family ipv4
+  route-target export 65000:100
+  route-target import 65000:100
+ exit-address-family
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$06Bf6Kkh9j9AkE$wemje2UkLVnyTWpgtCC/djGLMRw0j.Lk/56Nhhp.yvY
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-53797373
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-53797373
+ revocation-check none
+ rsakeypair TP-self-signed-53797373
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+!
+license udi pid CSR1000V sn 9JZ6JQJNQON
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$uGmWjA6HDlUAKE$lrZIq1HJqTMIAC1rdEhLzR9tWdgxw8oRKMzHdLimLXI
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.1.12 255.255.255.255
+ ip ospf 1 area 0
+!
+interface Loopback100
+ description STUDENT-NET Test Loopback
+ vrf forwarding STUDENT-NET
+ ip address 172.10.0.2 255.255.255.255
+!
+interface Loopback200
+ description STAFF-NET Test Loopback
+ vrf forwarding STAFF-NET
+ ip address 172.20.0.2 255.255.255.255
+!
+interface Loopback300
+ description RESEARCH-NET Test Loopback
+ vrf forwarding RESEARCH-NET
+ ip address 172.30.0.2 255.255.255.255
+!
+interface Loopback500
+ description GUEST-NET Test Loopback
+ vrf forwarding GUEST-NET
+ ip address 172.50.0.2 255.255.255.255
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 9JZ6JQJNQON
+ ip address 192.168.68.210 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-MAIN-AGG1
+ ip address 10.0.1.14 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-MAIN-PE1 (HA)
+ ip address 10.0.1.18 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.1.12
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.1.12
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description CORE1-RR
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description CORE2-RR
+ neighbor 10.255.0.2 update-source Loopback0
+ neighbor 10.255.1.1 remote-as 65000
+ neighbor 10.255.1.1 description EUNIV-MAIN-AGG1
+ neighbor 10.255.1.1 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.1.1 activate
+  neighbor 10.255.1.1 send-community both
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community extended
+  neighbor 10.255.1.1 activate
+  neighbor 10.255.1.1 send-community extended
+ exit-address-family
+ !
+ address-family ipv4 vrf GUEST-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf RESEARCH-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf STAFF-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf STUDENT-NET
+  redistribute connected
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-MED-AGG1
+  Role: Medical Campus Aggregation
+  Management IP: 192.168.68.211
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-MED-AGG1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$3uWihk9KUxkBn.$BaCYujEPxu5bthi0uis0Hc8r7SLATmdOihINhoOf6ok
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-36671097
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-36671097
+ revocation-check none
+ rsakeypair TP-self-signed-36671097
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+!
+license udi pid CSR1000V sn 966VUICUIDC
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$g/07ptQPw4KwMU$BX67uIE.rLS2/JnLBjEvNunhuzTl/74UBXQ5FkFI6ZA
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.2.1 255.255.255.255
+ ip ospf 1 area 0
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 966VUICUIDC
+ ip address 192.168.68.211 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-CORE2
+ ip address 10.0.2.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-CORE3
+ ip address 10.0.2.6 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ description To EUNIV-MED-PE1
+ ip address 10.0.2.9 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet5
+ description To EUNIV-MED-PE2
+ ip address 10.0.2.13 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet6
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet7
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet8
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet9
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet10
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.2.1
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.2.1
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description EUNIV-CORE1 (RR)
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description EUNIV-CORE2 (RR)
+ neighbor 10.255.0.2 update-source Loopback0
+ neighbor 10.255.2.11 remote-as 65000
+ neighbor 10.255.2.11 description EUNIV-MED-PE1
+ neighbor 10.255.2.11 update-source Loopback0
+ neighbor 10.255.2.12 remote-as 65000
+ neighbor 10.255.2.12 description EUNIV-MED-PE2
+ neighbor 10.255.2.12 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community both
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community both
+  neighbor 10.255.2.11 activate
+  neighbor 10.255.2.11 send-community both
+  neighbor 10.255.2.12 activate
+  neighbor 10.255.2.12 send-community both
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community extended
+  neighbor 10.255.2.11 activate
+  neighbor 10.255.2.11 send-community extended
+  neighbor 10.255.2.12 activate
+  neighbor 10.255.2.12 send-community extended
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip route 0.0.0.0 0.0.0.0 192.168.68.1
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-MED-PE1
+  Role: Medical Campus PE
+  Management IP: 192.168.68.212
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-MED-PE1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition GUEST-NET
+ description Guest/visitor network
+ rd 10.255.2.11:500
+ !
+ address-family ipv4
+  route-target export 65000:500
+  route-target import 65000:500
+ exit-address-family
+!
+vrf definition MEDICAL-NET
+ description HIPAA medical network
+ rd 10.255.2.11:400
+ !
+ address-family ipv4
+  route-target export 65000:400
+  route-target import 65000:400
+ exit-address-family
+!
+vrf definition RESEARCH-NET
+ description Research partner network
+ rd 10.255.2.11:300
+ !
+ address-family ipv4
+  route-target export 65000:300
+  route-target import 65000:300
+ exit-address-family
+!
+vrf definition STAFF-NET
+ description Staff and faculty network
+ rd 10.255.2.11:200
+ !
+ address-family ipv4
+  route-target export 65000:200
+  route-target import 65000:200
+ exit-address-family
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$crP6NDFpeejVJ.$ZBfr4lsbb6IXvA574P5xDkyCxkNujxmcxFaJjrPcUyc
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-1506651472
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-1506651472
+ revocation-check none
+ rsakeypair TP-self-signed-1506651472
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+!
+license udi pid CSR1000V sn 9QW41H9RBS6
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$BWboHGffFXumrk$FXFoQUWB.9YEh8DlxxFVQTbCVo//8y6yT50Eyhld6/.
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.2.11 255.255.255.255
+ ip ospf 1 area 0
+!
+interface Loopback200
+ description STAFF-NET Test Loopback
+ vrf forwarding STAFF-NET
+ ip address 172.20.0.11 255.255.255.255
+!
+interface Loopback300
+ description RESEARCH-NET Test Loopback
+ vrf forwarding RESEARCH-NET
+ ip address 172.30.0.11 255.255.255.255
+!
+interface Loopback400
+ description MEDICAL-NET Test Loopback
+ vrf forwarding MEDICAL-NET
+ ip address 172.40.0.11 255.255.255.255
+!
+interface Loopback500
+ description GUEST-NET Test Loopback
+ vrf forwarding GUEST-NET
+ ip address 172.50.0.11 255.255.255.255
+!
+interface GigabitEthernet1
+ description Management
+ ip address 192.168.68.212 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-MED-AGG1
+ ip address 10.0.2.10 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-MED-PE2 (HA)
+ ip address 10.0.2.17 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.2.11
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.2.11
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description CORE1-RR
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description CORE2-RR
+ neighbor 10.255.0.2 update-source Loopback0
+ neighbor 10.255.2.1 remote-as 65000
+ neighbor 10.255.2.1 description EUNIV-MED-AGG1
+ neighbor 10.255.2.1 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.2.1 activate
+  neighbor 10.255.2.1 send-community both
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community extended
+  neighbor 10.255.2.1 activate
+  neighbor 10.255.2.1 send-community extended
+ exit-address-family
+ !
+ address-family ipv4 vrf GUEST-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf MEDICAL-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf RESEARCH-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf STAFF-NET
+  redistribute connected
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+!
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-MED-PE2
+  Role: Medical Campus PE
+  Management IP: 192.168.68.213
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-MED-PE2
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition GUEST-NET
+ description Guest/visitor network
+ rd 10.255.2.12:500
+ !
+ address-family ipv4
+  route-target export 65000:500
+  route-target import 65000:500
+ exit-address-family
+!
+vrf definition MEDICAL-NET
+ description HIPAA medical network
+ rd 10.255.2.12:400
+ !
+ address-family ipv4
+  route-target export 65000:400
+  route-target import 65000:400
+ exit-address-family
+!
+vrf definition RESEARCH-NET
+ description Research partner network
+ rd 10.255.2.12:300
+ !
+ address-family ipv4
+  route-target export 65000:300
+  route-target import 65000:300
+ exit-address-family
+!
+vrf definition STAFF-NET
+ description Staff and faculty network
+ rd 10.255.2.12:200
+ !
+ address-family ipv4
+  route-target export 65000:200
+  route-target import 65000:200
+ exit-address-family
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$Ab4TD9Ep6kFK7k$a4olKbxm9vWj85BOArsDEpulo5Egfw.aSCg4iyoOVQs
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-2543400447
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-2543400447
+ revocation-check none
+ rsakeypair TP-self-signed-2543400447
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+!
+license udi pid CSR1000V sn 9UYHYW8SKF6
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$SWzz/KLI7oSsLk$Br.MqNQS9lowgbzj4cDSry/kFezpbcsb3tH/x/G1z1o
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.2.12 255.255.255.255
+ ip ospf 1 area 0
+!
+interface Loopback200
+ description STAFF-NET Test Loopback
+ vrf forwarding STAFF-NET
+ ip address 172.20.0.12 255.255.255.255
+!
+interface Loopback300
+ description RESEARCH-NET Test Loopback
+ vrf forwarding RESEARCH-NET
+ ip address 172.30.0.12 255.255.255.255
+!
+interface Loopback400
+ description MEDICAL-NET Test Loopback
+ vrf forwarding MEDICAL-NET
+ ip address 172.40.0.12 255.255.255.255
+!
+interface Loopback500
+ description GUEST-NET Test Loopback
+ vrf forwarding GUEST-NET
+ ip address 172.50.0.12 255.255.255.255
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 9UYHYW8SKF6
+ ip address 192.168.68.213 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-MED-AGG1
+ ip address 10.0.2.14 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-MED-PE1 (HA)
+ ip address 10.0.2.18 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.2.12
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.2.12
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description CORE1-RR
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description CORE2-RR
+ neighbor 10.255.0.2 update-source Loopback0
+ neighbor 10.255.2.1 remote-as 65000
+ neighbor 10.255.2.1 description EUNIV-MED-AGG1
+ neighbor 10.255.2.1 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.2.1 activate
+  neighbor 10.255.2.1 send-community both
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community extended
+  neighbor 10.255.2.1 activate
+  neighbor 10.255.2.1 send-community extended
+ exit-address-family
+ !
+ address-family ipv4 vrf GUEST-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf MEDICAL-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf RESEARCH-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf STAFF-NET
+  redistribute connected
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-RES-AGG1
+  Role: Research Campus Aggregation
+  Management IP: 192.168.68.214
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-RES-AGG1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$Y/4hacRekdUEFk$7Af2slt74hKqzPc4F2oLdGs6BDvRziwzCZo6EruNPk6
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+crypto pki trustpoint TP-self-signed-2787248178
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-2787248178
+ revocation-check none
+ rsakeypair TP-self-signed-2787248178
+!
+!
+!
+license udi pid CSR1000V sn 9J0UXR7TKYB
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$YFZDhInHTXy/Uk$agotDlQGhkld1iqZ4DEH8h8iRmJCcQuql2Tn2d40jvk
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.3.1 255.255.255.255
+ ip ospf 1 area 0
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 9J0UXR7TKYB
+ ip address 192.168.68.214 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-CORE4
+ ip address 10.0.3.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-CORE5
+ ip address 10.0.3.6 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ description To EUNIV-RES-PE1
+ ip address 10.0.3.9 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet5
+ description To EUNIV-RES-PE2
+ ip address 10.0.3.13 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet6
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet7
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet8
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet9
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet10
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.3.1
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.3.1
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description EUNIV-CORE1 (RR)
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.5 remote-as 65000
+ neighbor 10.255.0.5 description EUNIV-CORE5 (RR)
+ neighbor 10.255.0.5 update-source Loopback0
+ neighbor 10.255.3.11 remote-as 65000
+ neighbor 10.255.3.11 description EUNIV-RES-PE1
+ neighbor 10.255.3.11 update-source Loopback0
+ neighbor 10.255.3.12 remote-as 65000
+ neighbor 10.255.3.12 description EUNIV-RES-PE2
+ neighbor 10.255.3.12 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community both
+  neighbor 10.255.0.5 activate
+  neighbor 10.255.0.5 send-community both
+  neighbor 10.255.3.11 activate
+  neighbor 10.255.3.11 send-community both
+  neighbor 10.255.3.12 activate
+  neighbor 10.255.3.12 send-community both
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.5 activate
+  neighbor 10.255.0.5 send-community extended
+  neighbor 10.255.3.11 activate
+  neighbor 10.255.3.11 send-community extended
+  neighbor 10.255.3.12 activate
+  neighbor 10.255.3.12 send-community extended
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip route 0.0.0.0 0.0.0.0 192.168.68.1
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-RES-PE1
+  Role: Research Campus PE
+  Management IP: 192.168.68.215
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-RES-PE1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition GUEST-NET
+ description Guest/visitor network
+ rd 10.255.3.11:500
+ !
+ address-family ipv4
+  route-target export 65000:500
+  route-target import 65000:500
+ exit-address-family
+!
+vrf definition RESEARCH-NET
+ description Research partner network
+ rd 10.255.3.11:300
+ !
+ address-family ipv4
+  route-target export 65000:300
+  route-target import 65000:300
+ exit-address-family
+!
+vrf definition STAFF-NET
+ description Staff and faculty network
+ rd 10.255.3.11:200
+ !
+ address-family ipv4
+  route-target export 65000:200
+  route-target import 65000:200
+ exit-address-family
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$3OwGcCJVTD4ku.$ydZjX/R2rxWZWr2ubPKDpC5IA.CLu5QLydbCNQRnMTw
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-502617976
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-502617976
+ revocation-check none
+ rsakeypair TP-self-signed-502617976
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+!
+!
+license udi pid CSR1000V sn 9RZWXV1GG3R
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$9SyitqeczrXlWE$BENRsweOFxAveYSfQEkYHI1aYXHrWU6OpNl5sRPtDmc
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.3.11 255.255.255.255
+ ip ospf 1 area 0
+!
+interface Loopback200
+ description STAFF-NET Test Loopback
+ vrf forwarding STAFF-NET
+ ip address 172.20.0.21 255.255.255.255
+!
+interface Loopback300
+ description RESEARCH-NET Test Loopback
+ vrf forwarding RESEARCH-NET
+ ip address 172.30.0.21 255.255.255.255
+!
+interface Loopback500
+ description GUEST-NET Test Loopback
+ vrf forwarding GUEST-NET
+ ip address 172.50.0.21 255.255.255.255
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 9RZWXV1GG3R
+ ip address 192.168.68.215 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-RES-AGG1
+ ip address 10.0.3.10 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-RES-PE2 (HA)
+ ip address 10.0.3.17 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.3.11
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.3.11
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description CORE1-RR
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description CORE2-RR
+ neighbor 10.255.0.2 update-source Loopback0
+ neighbor 10.255.3.1 remote-as 65000
+ neighbor 10.255.3.1 description EUNIV-RES-AGG1
+ neighbor 10.255.3.1 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.3.1 activate
+  neighbor 10.255.3.1 send-community both
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community extended
+  neighbor 10.255.3.1 activate
+  neighbor 10.255.3.1 send-community extended
+ exit-address-family
+ !
+ address-family ipv4 vrf GUEST-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf RESEARCH-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf STAFF-NET
+  redistribute connected
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
+
+================================================================================
+  EUNIV-RES-PE2
+  Role: Research Campus PE
+  Management IP: 192.168.68.216
+================================================================================
+
+
+!
+!
+version 17.3
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service call-home
+platform qfp utilization monitor load 80
+platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname EUNIV-RES-PE2
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition GUEST-NET
+ description Guest/visitor network
+ rd 10.255.3.12:500
+ !
+ address-family ipv4
+  route-target export 65000:500
+  route-target import 65000:500
+ exit-address-family
+!
+vrf definition RESEARCH-NET
+ description Research partner network
+ rd 10.255.3.12:300
+ !
+ address-family ipv4
+  route-target export 65000:300
+  route-target import 65000:300
+ exit-address-family
+!
+vrf definition STAFF-NET
+ description Staff and faculty network
+ rd 10.255.3.12:200
+ !
+ address-family ipv4
+  route-target export 65000:200
+  route-target import 65000:200
+ exit-address-family
+!
+logging buffered 65536 informational
+no logging console
+enable secret 9 $9$oaq/qLYll4uI9k$Up5238vjauaO.UhvQOOFQUscoG37ASkS5pNxXG6loSU
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.255.255.1 10.255.255.2
+ip domain name euniv.edu
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+!
+crypto pki trustpoint TP-self-signed-4262113497
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-4262113497
+ revocation-check none
+ rsakeypair TP-self-signed-4262113497
+!
+!
+!
+license udi pid CSR1000V sn 9RGTW67E1GW
+diagnostic bootup level minimal
+memory free low-watermark processor 71464
+!
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 secret 9 $9$Hj.hEapgziVQ0E$DXZcMXTdow/fSXXwlA2Ajm/asYa0UEkAPak/i/6k0/w
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+! 
+!
+!
+interface Loopback0
+ description Router-ID / BGP Source
+ ip address 10.255.3.12 255.255.255.255
+ ip ospf 1 area 0
+!
+interface Loopback200
+ description STAFF-NET Test Loopback
+ vrf forwarding STAFF-NET
+ ip address 172.20.0.22 255.255.255.255
+!
+interface Loopback300
+ description RESEARCH-NET Test Loopback
+ vrf forwarding RESEARCH-NET
+ ip address 172.30.0.22 255.255.255.255
+!
+interface Loopback500
+ description GUEST-NET Test Loopback
+ vrf forwarding GUEST-NET
+ ip address 172.50.0.22 255.255.255.255
+!
+interface GigabitEthernet1
+ description Management
+ ip dhcp client client-id ascii 9RGTW67E1GW
+ ip address 192.168.68.216 255.255.252.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ description To EUNIV-RES-AGG1
+ ip address 10.0.3.14 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ description To EUNIV-RES-PE1 (HA)
+ ip address 10.0.3.18 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ negotiation auto
+ mpls ip
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router ospf 1
+ router-id 10.255.3.12
+ log-adjacency-changes detail
+ auto-cost reference-bandwidth 100000
+ passive-interface GigabitEthernet1
+ passive-interface Loopback0
+!
+router bgp 65000
+ bgp router-id 10.255.3.12
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 10.255.0.1 remote-as 65000
+ neighbor 10.255.0.1 description CORE1-RR
+ neighbor 10.255.0.1 update-source Loopback0
+ neighbor 10.255.0.2 remote-as 65000
+ neighbor 10.255.0.2 description CORE2-RR
+ neighbor 10.255.0.2 update-source Loopback0
+ neighbor 10.255.3.1 remote-as 65000
+ neighbor 10.255.3.1 description EUNIV-RES-AGG1
+ neighbor 10.255.3.1 update-source Loopback0
+ !
+ address-family ipv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.3.1 activate
+  neighbor 10.255.3.1 send-community both
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.255.0.1 activate
+  neighbor 10.255.0.1 send-community extended
+  neighbor 10.255.0.2 activate
+  neighbor 10.255.0.2 send-community extended
+  neighbor 10.255.3.1 activate
+  neighbor 10.255.3.1 send-community extended
+ exit-address-family
+ !
+ address-family ipv4 vrf GUEST-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf RESEARCH-NET
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv4 vrf STAFF-NET
+  redistribute connected
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet1
+!
+ip ssh version 2
+!
+ip access-list standard VTY-ACCESS
+ 10 permit 10.0.0.0 0.255.255.255
+ 20 permit 192.168.68.0 0.0.3.255
+ 30 deny   any log
+!
+!
+!
+!
+mpls ldp router-id Loopback0 force
+snmp-server community euniv-mon-ro RO
+snmp-server location E University Data Center
+snmp-server contact noc@euniv.edu
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ access-class VTY-ACCESS in
+ exec-timeout 0 0
+ login local
+ transport input ssh
+line vty 5 15
+ access-class VTY-ACCESS in
+ exec-timeout 30 0
+ login local
+ transport input ssh
+!
+call-home
+ ! If contact email address in call-home is configured as sch-smart-licensing@cisco.com
+ ! the email address configured in Cisco Smart License Portal will be used as contact email address to send SCH notifications.
+ contact-email-addr sch-smart-licensing@cisco.com
+ profile "CiscoTAC-1"
+  active
+  destination transport-method http
+ntp server 10.255.255.10
+ntp server 10.255.255.11
+!
+!
+!
+!
+!
+end
