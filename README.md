@@ -52,7 +52,7 @@ This document defines the network architecture for E-University, a multi-campus 
 - **BGP** - iBGP with Route Reflectors for overlay
 - **MPLS** - Label switching for traffic engineering
 - **L3VPN** - VRF-based customer segmentation
-- **BFD** - Fast failure detection (150ms) on OSPF and BGP interfaces
+- **BFD** - Fast failure detection (300ms) on edge links (Core↔INET-GW, AGG↔Edge)
 
 ---
 
@@ -402,6 +402,53 @@ interface GigabitEthernet2
 | CORE4 | CORE3, CORE5, RES-AGG1 |
 | CORE5 | CORE1, CORE4, RES-AGG1 |
 
+### 7.3 BFD Design
+
+BFD (Bidirectional Forwarding Detection) is deployed on **edge links only** - not inside the MPLS core where IGP convergence is sufficient.
+
+#### BFD Parameters
+
+| Parameter | Value |
+|-----------|-------|
+| Interval | 100ms |
+| Min RX | 100ms |
+| Multiplier | 3 |
+| Detection Time | 300ms |
+
+#### BFD-Enabled Links
+
+| Link Type | Device A | Interface | Device B | Interface |
+|-----------|----------|-----------|----------|-----------|
+| Core↔INET-GW | EUNIV-CORE1 | Gi4 | EUNIV-INET-GW1 | Gi2 |
+| Core↔INET-GW | EUNIV-CORE2 | Gi4 | EUNIV-INET-GW2 | Gi2 |
+| AGG↔Edge | EUNIV-MAIN-AGG1 | Gi4 | EUNIV-MAIN-EDGE1 | Gi2 |
+| AGG↔Edge | EUNIV-MAIN-AGG1 | Gi5 | EUNIV-MAIN-EDGE2 | Gi2 |
+| AGG↔Edge | EUNIV-MED-AGG1 | Gi4 | EUNIV-MED-EDGE1 | Gi2 |
+| AGG↔Edge | EUNIV-MED-AGG1 | Gi5 | EUNIV-MED-EDGE2 | Gi2 |
+| AGG↔Edge | EUNIV-RES-AGG1 | Gi4 | EUNIV-RES-EDGE1 | Gi2 |
+| AGG↔Edge | EUNIV-RES-AGG1 | Gi5 | EUNIV-RES-EDGE2 | Gi2 |
+
+#### BFD Configuration Example
+
+```
+interface GigabitEthernet4
+ bfd interval 100 min_rx 100 multiplier 3
+
+router ospf 1
+ bfd all-interfaces
+```
+
+#### Why Not BFD in the Core?
+
+- MPLS core has multiple redundant paths
+- OSPF fast-hello (1s dead-timer) provides sufficient convergence
+- LDP converges based on IGP - no additional benefit from BFD
+- Reduces operational complexity and CPU overhead
+
+BFD is most valuable at network edges where:
+1. **INET-GW links** - Fast detection of upstream ISP failures
+2. **AGG↔Edge links** - Fast PE failover for customer VRFs
+
 ---
 
 ## 8. VRF Design
@@ -617,6 +664,18 @@ line vty 0 15
 |---------|---------|-----------|
 | admin | Primary admin account | 15 |
 
+**Environment-based Credentials**: Device credentials are stored in `.env` and loaded via environment variables. The `.env` file is excluded from version control (`.gitignore`) to prevent credential exposure.
+
+```bash
+# Create .env file from template
+cp .env.example .env
+
+# Edit with your credentials
+vim .env
+```
+
+The pyATS testbed files use `%ENV{VAR_NAME}` syntax to reference credentials from the environment.
+
 ### 11.3 SSH Configuration
 
 - SSH Version 2 only
@@ -657,7 +716,7 @@ line vty 0 15
 
 | Script | Purpose |
 |--------|---------|
-| `deploy_bfd.py` | Deploy BFD on OSPF/BGP interfaces (50ms interval, 3x multiplier) |
+| `configure_bfd.py` | Deploy BFD on edge links (100ms interval, 3x multiplier = 300ms detection) |
 | `deploy_inet.py` | Deploy Internet gateway BGP configuration |
 | `deploy_customer_traffic.py` | Deploy L3VPN/customer traffic on Edge routers |
 | `deploy_host_interfaces.py` | Configure Edge router Gi6 interfaces in STAFF-NET VRF |
@@ -814,6 +873,10 @@ show mpls ldp bindings
 # VRF
 show vrf
 show ip route vrf <name>
+
+# BFD
+show bfd neighbors
+show bfd neighbors detail
 ```
 
 ### 13.2 Troubleshooting Checklist
@@ -833,6 +896,12 @@ show ip route vrf <name>
    - Check LDP neighbor status
    - Confirm loopback in OSPF
 
+4. **BFD Neighbors Down**
+   - Verify `bfd interval` configured on both ends
+   - Check `bfd all-interfaces` under `router ospf 1`
+   - Confirm OSPF neighbor is FULL (BFD requires OSPF)
+   - Check for hardware/platform BFD support
+
 ### 13.3 Document Revision History
 
 | Version | Date | Author | Changes |
@@ -846,6 +915,8 @@ show ip route vrf <name>
 | 1.6 | 2025-12-02 | Network Team | Added JSON output support to test_euniv_network.py for exporting test results |
 | 1.7 | 2025-12-02 | Network Team | Configured static management IPs on all devices (previously DHCP), updated baseline configs |
 | 1.8 | 2025-12-02 | Network Team | Added HOST1-6 configs to baseline folder for complete lab deployment |
+| 1.9 | 2025-12-02 | Network Team | Added credential protection - credentials now use environment variables via .env file, removed from git history |
+| 2.0 | 2025-12-03 | Network Team | Deployed BFD on edge links (Core↔INET-GW, AGG↔Edge) with 300ms detection time, added BFD design section, updated pyATS validation tests |
 
 ---
 
