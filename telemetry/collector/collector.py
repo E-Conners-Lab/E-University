@@ -310,8 +310,9 @@ class TelemetryCollector:
             output = conn.send_command('show standby brief')
 
             for line in output.split('\n'):
-                # Parse: Gi3.100  100  P  Active  local  10.100.1.1  10.100.1.254
-                match = re.match(r'(\S+)\s+(\d+)\s+\S+\s+(Active|Standby|Init)', line)
+                # Parse: Gi3.100  100  150 P Active  local  10.10.1.1  10.10.1.254
+                # Format: Interface Grp Pri P State Active Standby VirtualIP
+                match = re.match(r'(\S+)\s+(\d+)\s+\d+\s+\S?\s*(Active|Standby|Init)', line)
                 if match:
                     interface = match.group(1)
                     group = match.group(2)

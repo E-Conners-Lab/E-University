@@ -38,11 +38,20 @@ snmp-server community {{ snmp_community }} RO
 snmp-server location {{ snmp_location }}
 snmp-server contact {{ snmp_contact }}
 !
+! --- IPv6 Unicast Routing ---
+{% if loopback_ipv6 is defined %}
+ipv6 unicast-routing
+{% endif %}
+!
 ! --- Loopback Interface ---
 interface Loopback0
  description Router-ID / BGP Source
  ip address {{ loopback_ip }} 255.255.255.255
  ip ospf 1 area 0
+{% if loopback_ipv6 is defined %}
+ ipv6 address {{ loopback_ipv6 }}/128
+ ipv6 ospf 1 area 0
+{% endif %}
  no shutdown
 !
 ! --- Management Interface ---
@@ -58,12 +67,17 @@ interface {{ intf.name }}
  ip address {{ intf.ip }} {{ intf.mask }}
  ip ospf 1 area 0
  ip ospf network point-to-point
+{% if intf.ipv6 is defined %}
+ ipv6 address {{ intf.ipv6 }}
+ ipv6 ospf 1 area 0
+ ipv6 ospf network point-to-point
+{% endif %}
  mpls ip
  no shutdown
 !
 {% endfor %}
 ! =====================================================================
-! OSPF CONFIGURATION
+! OSPF CONFIGURATION (IPv4)
 ! =====================================================================
 !
 router ospf 1
@@ -73,6 +87,19 @@ router ospf 1
  passive-interface GigabitEthernet1
  log-adjacency-changes detail
 !
+{% if loopback_ipv6 is defined %}
+! =====================================================================
+! OSPFv3 CONFIGURATION (IPv6)
+! =====================================================================
+!
+ipv6 router ospf 1
+ router-id {{ loopback_ip }}
+ auto-cost reference-bandwidth 100000
+ passive-interface Loopback0
+ passive-interface GigabitEthernet1
+ log-adjacency-changes detail
+!
+{% endif %}
 ! =====================================================================
 ! MPLS CONFIGURATION
 ! =====================================================================
@@ -116,6 +143,39 @@ router bgp {{ bgp_asn }}
 {% endif %}
 {% endfor %}
  exit-address-family
+!
+{% if loopback_ipv6 is defined %}
+! --- BGP IPv6 Neighbors ---
+{% for neighbor in bgp_neighbors %}
+{% if neighbor.ipv6 is defined %}
+ neighbor {{ neighbor.ipv6 }} remote-as {{ neighbor.remote_as }}
+ neighbor {{ neighbor.ipv6 }} update-source Loopback0
+ neighbor {{ neighbor.ipv6 }} description {{ neighbor.description }} (IPv6)
+{% endif %}
+{% endfor %}
+!
+ address-family ipv6 unicast
+{% for neighbor in bgp_neighbors %}
+{% if neighbor.ipv6 is defined %}
+  neighbor {{ neighbor.ipv6 }} activate
+  neighbor {{ neighbor.ipv6 }} send-community both
+{% if is_route_reflector %}
+  neighbor {{ neighbor.ipv6 }} route-reflector-client
+{% endif %}
+{% endif %}
+{% endfor %}
+ exit-address-family
+!
+ address-family vpnv6
+{% for neighbor in bgp_neighbors %}
+  neighbor {{ neighbor.ip }} activate
+  neighbor {{ neighbor.ip }} send-community extended
+{% if is_route_reflector %}
+  neighbor {{ neighbor.ip }} route-reflector-client
+{% endif %}
+{% endfor %}
+ exit-address-family
+{% endif %}
 !
 ! =====================================================================
 ! SECURITY
