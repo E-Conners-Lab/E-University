@@ -7,7 +7,7 @@ interface down alerts. This script administratively shuts them down.
 """
 
 import os
-import sys
+
 from genie.testbed import load
 
 # Devices and interfaces to shutdown

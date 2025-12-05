@@ -21,14 +21,13 @@ Usage:
     pyats run job ../euniv_job.py --dry-run
 """
 
-import re
 import logging
-from typing import Dict, List, Optional
+import re
+
+from genie.testbed import load as genie_load
+from pyats.topology import Testbed
 
 from pyats import aetest
-from pyats.topology import Testbed
-from genie.testbed import load as genie_load
-from unicon.core.errors import ConnectionError, SubCommandFailure
 
 logger = logging.getLogger(__name__)
 

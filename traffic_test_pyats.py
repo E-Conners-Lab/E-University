@@ -27,15 +27,14 @@ import os
 import re
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 # pyATS imports
 try:
-    from pyats.topology import loader
     from genie.libs.parser.utils import get_parser
+    from pyats.topology import loader
     from unicon.core.errors import ConnectionError, SubCommandFailure
 except ImportError:
     print("Please install pyATS: pip install pyats[full] genie")
@@ -323,7 +322,7 @@ class TrafficTest:
                 result.throughput_mbps = round(result.throughput_bps / 1_000_000, 4)
                 result.success = True
 
-        except Exception as e:
+        except Exception:
             result.success = False
 
         return result

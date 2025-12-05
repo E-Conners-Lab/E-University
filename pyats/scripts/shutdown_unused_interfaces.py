@@ -22,11 +22,11 @@ Usage:
     python shutdown_unused_interfaces.py --apply --devices EUNIV-CORE1 EUNIV-CORE2
 """
 
-import os
-import sys
-import re
 import argparse
-from typing import Dict, List, Set
+import os
+import re
+import sys
+from typing import Dict, List
 
 # pyATS imports
 try:
@@ -268,11 +268,11 @@ def main():
             print(f"  Connecting to {device.name}...")
             device.connect(log_stdout=False)
 
-            print(f"  Gathering interface information...")
+            print("  Gathering interface information...")
             interfaces = get_interface_info(device)
 
             if not interfaces:
-                print(f"  No interfaces found, skipping")
+                print("  No interfaces found, skipping")
                 device.disconnect()
                 continue
 
@@ -296,7 +296,7 @@ def main():
                 }
                 total_shutdown += len(unused)
             else:
-                print(f"  No unused interfaces found")
+                print("  No unused interfaces found")
                 results_summary[device.name] = {
                     "total_interfaces": len(interfaces),
                     "unused_interfaces": 0,

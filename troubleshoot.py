@@ -17,13 +17,13 @@ Author: E-University Network Team
 ═══════════════════════════════════════════════════════════════════════════════
 """
 
+import argparse
 import os
+import re
+import time
+
 from dotenv import load_dotenv
 from netmiko import ConnectHandler
-import re
-import sys
-import time
-import argparse
 
 # Load environment variables
 load_dotenv()
@@ -65,7 +65,7 @@ def connect(name):
         conn = ConnectHandler(**device)
         conn.enable()
         return conn
-    except:
+    except Exception:
         return None
 
 

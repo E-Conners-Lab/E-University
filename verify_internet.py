@@ -5,9 +5,10 @@ Verifies BGP sessions, default routes, and internet reachability
 """
 
 import os
+import re
+
 from dotenv import load_dotenv
 from pyats.topology import loader
-import re
 
 # Load environment variables
 load_dotenv()
@@ -57,7 +58,6 @@ devices:
 
 def main():
     import tempfile
-    import os
 
     print("=" * 70)
     print("E-UNIVERSITY - INTERNET CONNECTIVITY VERIFICATION")

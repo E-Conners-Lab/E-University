@@ -13,7 +13,7 @@ BFD Settings:
 """
 
 import os
-import sys
+
 from genie.testbed import load
 
 # BFD configuration to apply
@@ -90,26 +90,26 @@ def configure_bfd(testbed_file: str, dry_run: bool = False):
             config = "\n".join(config_lines)
 
             print(f"  Interfaces to configure: {', '.join(interfaces)}")
-            print(f"  Configuration:")
+            print("  Configuration:")
             for line in config_lines:
                 print(f"    {line}")
 
             if dry_run:
-                print(f"  [DRY RUN] Would apply configuration")
+                print("  [DRY RUN] Would apply configuration")
             else:
-                print(f"  Applying configuration...")
+                print("  Applying configuration...")
                 device.configure(config)
-                print(f"  Configuration applied successfully")
+                print("  Configuration applied successfully")
 
             # Verify BFD is enabled
-            print(f"  Verifying BFD status...")
+            print("  Verifying BFD status...")
             output = device.execute("show bfd neighbors")
             if output.strip():
-                print(f"  BFD neighbors found:")
+                print("  BFD neighbors found:")
                 for line in output.splitlines()[:10]:
                     print(f"    {line}")
             else:
-                print(f"  No BFD neighbors yet (peer may not be configured)")
+                print("  No BFD neighbors yet (peer may not be configured)")
 
             device.disconnect()
             results['success'].append(device_name)

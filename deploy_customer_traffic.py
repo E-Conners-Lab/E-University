@@ -5,9 +5,10 @@ E-University Network - Customer Traffic Deployment Script (Fixed)
 This version first establishes BGP neighbors before activating VPNv4.
 """
 
-from pyats.topology import loader
 import os
 import time
+
+from pyats.topology import loader
 
 # Configuration for Route Reflectors - adds PE neighbors + VPNv4
 RR_CONFIGS = {
@@ -645,7 +646,7 @@ def main():
             device = testbed.devices[device_name]
             device.connect(log_stdout=False)
             device.configure(config)
-            print(f"    ✅ BGP neighbors + VPNv4 configured")
+            print("    ✅ BGP neighbors + VPNv4 configured")
             device.disconnect()
         except Exception as e:
             print(f"    ❌ Error: {e}")
@@ -664,7 +665,7 @@ def main():
             device = testbed.devices[device_name]
             device.connect(log_stdout=False)
             device.configure(config)
-            print(f"    ✅ VRFs + Customer interfaces configured")
+            print("    ✅ VRFs + Customer interfaces configured")
             device.disconnect()
         except Exception as e:
             print(f"    ❌ Error: {e}")

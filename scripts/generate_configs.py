@@ -11,9 +11,9 @@ Usage:
     python generate_configs.py --diff             # Show what would change
 """
 
+import argparse
 import os
 import sys
-import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -30,30 +30,30 @@ class ConfigGenerator:
         self.base_dir = Path(__file__).parent.parent
         self.template_dir = self.base_dir / "templates"
         self.output_dir = self.base_dir / "configs" / "generated"
-        
+
         # Create output directory if it doesn't exist
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Set up Jinja2 environment
         self.env = Environment(
             loader=FileSystemLoader(str(self.template_dir)),
             trim_blocks=True,
             lstrip_blocks=True,
         )
-    
+
     def generate_config(self, hostname: str) -> str:
         """Generate configuration for a single device."""
         if hostname not in DEVICES:
             raise ValueError(f"Unknown device: {hostname}")
-        
+
         device = DEVICES[hostname]
         template_name = device.get("template", "core_router.j2")
-        
+
         try:
             template = self.env.get_template(template_name)
         except Exception as e:
             raise ValueError(f"Template not found: {template_name}") from e
-        
+
         # Build template context
         context = {
             "hostname": hostname,
@@ -61,27 +61,27 @@ class ConfigGenerator:
             **ENTERPRISE,
             **device,
         }
-        
+
         # Add VRF definitions for PE routers
         if device.get("vrfs"):
             context["vrfs"] = [
                 {"name": vrf_name, **VRFS[vrf_name]}
                 for vrf_name in device["vrfs"]
             ]
-        
+
         # Render template
         return template.render(**context)
-    
+
     def save_config(self, hostname: str, config: str) -> Path:
         """Save generated config to file."""
         filepath = self.output_dir / f"{hostname}.cfg"
         filepath.write_text(config)
         return filepath
-    
+
     def generate_all(self, show_diff: bool = False) -> dict:
         """Generate configs for all devices."""
         results = {"success": [], "failed": []}
-        
+
         print("=" * 70)
         print("CONFIG GENERATION - E University Network")
         print("=" * 70)
@@ -90,11 +90,11 @@ class ConfigGenerator:
         print(f"Timestamp:          {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 70)
         print()
-        
+
         for hostname in DEVICES:
             try:
                 config = self.generate_config(hostname)
-                
+
                 if show_diff:
                     filepath = self.output_dir / f"{hostname}.cfg"
                     if filepath.exists():
@@ -108,20 +108,20 @@ class ConfigGenerator:
                 else:
                     filepath = self.save_config(hostname, config)
                     print(f"  ✓ {hostname} -> {filepath.name}")
-                
+
                 results["success"].append(hostname)
-                
+
             except Exception as e:
                 print(f"  ✗ {hostname} - ERROR: {e}")
                 results["failed"].append(hostname)
-        
+
         print()
         print("=" * 70)
         print(f"Generated: {len(results['success'])}/{len(DEVICES)} configs")
         if results["failed"]:
             print(f"Failed:    {', '.join(results['failed'])}")
         print("=" * 70)
-        
+
         return results
 
 
@@ -143,18 +143,18 @@ def main():
         action="store_true",
         help="List all available devices"
     )
-    
+
     args = parser.parse_args()
-    
+
     generator = ConfigGenerator()
-    
+
     if args.list:
         print("\nAvailable devices:")
         for hostname, data in DEVICES.items():
             print(f"  {hostname:25} - {data['role']}")
         print()
         return
-    
+
     if args.device:
         try:
             config = generator.generate_config(args.device)

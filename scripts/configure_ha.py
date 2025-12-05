@@ -22,7 +22,7 @@ HSRP Groups by VRF:
 """
 
 import os
-import sys
+
 from genie.testbed import load
 
 # HSRP Configuration per campus
@@ -103,7 +103,7 @@ def build_hsrp_config(device_name: str) -> list:
             f" encapsulation dot1Q {vlan}",
             f" vrf forwarding {vrf}",
             f" ip address {ip_addr} 255.255.255.0",
-            f" standby version 2",
+            " standby version 2",
             f" standby {vlan} ip {virtual_ip}",
             f" standby {vlan} priority {priority}",
         ]
@@ -150,32 +150,32 @@ def configure_hsrp(testbed_file: str, dry_run: bool = False):
             print(f"  Connecting to {device_name}...")
             device.connect(log_stdout=False)
 
-            print(f"  Configuration to apply:")
+            print("  Configuration to apply:")
             for block in config_blocks:
                 for line in block:
                     print(f"    {line}")
                 print()
 
             if dry_run:
-                print(f"  [DRY RUN] Would apply configuration")
+                print("  [DRY RUN] Would apply configuration")
             else:
-                print(f"  Applying configuration...")
+                print("  Applying configuration...")
                 # Apply each config block separately to avoid issues
                 for block in config_blocks:
                     config_str = "\n".join(block)
                     device.configure(config_str)
-                print(f"  Configuration applied successfully")
+                print("  Configuration applied successfully")
 
             # Verify HSRP status
             if not dry_run:
-                print(f"  Verifying HSRP status...")
+                print("  Verifying HSRP status...")
                 output = device.execute("show standby brief")
                 if output.strip():
-                    print(f"  HSRP Status:")
+                    print("  HSRP Status:")
                     for line in output.splitlines():
                         print(f"    {line}")
                 else:
-                    print(f"  No HSRP groups found yet")
+                    print("  No HSRP groups found yet")
 
             device.disconnect()
             results['success'].append(device_name)

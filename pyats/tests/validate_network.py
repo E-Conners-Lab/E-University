@@ -35,16 +35,16 @@ Usage:
     python validate_network.py --json-output report.json
 """
 
-import os
-import sys
-import json
 import argparse
-import time
+import json
+import os
 import re
-from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, field, asdict
+import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from typing import Any, Dict, List, Tuple
 
 # pyATS imports
 try:
@@ -238,12 +238,12 @@ def print_final_summary(report: ValidationReport):
 
     print(f"\n  {Colors.BOLD}Overall Status: {status_color}{report.overall_status}{Colors.RESET}")
     print(f"\n  Duration: {report.duration_seconds:.1f} seconds")
-    print(f"\n  Results:")
+    print("\n  Results:")
     print(f"    {Colors.GREEN}Passed:  {report.total_passed}{Colors.RESET}")
     print(f"    {Colors.RED}Failed:  {report.total_failed}{Colors.RESET}")
     print(f"    {Colors.YELLOW}Skipped: {report.total_skipped}{Colors.RESET}")
 
-    print(f"\n  Categories:")
+    print("\n  Categories:")
     for name, category in report.categories.items():
         status_icon = "✓" if category.status == "PASS" else "✗"
         status_color = Colors.GREEN if category.status == "PASS" else Colors.RED
@@ -369,7 +369,7 @@ class NetworkValidator:
                 test = TestCase(
                     name=f"connectivity_{name}",
                     status="PASS",
-                    message=f"SSH connection successful",
+                    message="SSH connection successful",
                     device=name,
                     duration_ms=(time.time() - start) * 1000
                 )
@@ -377,7 +377,7 @@ class NetworkValidator:
                 test = TestCase(
                     name=f"connectivity_{name}",
                     status="FAIL",
-                    message=f"SSH connection failed",
+                    message="SSH connection failed",
                     device=name,
                     duration_ms=(time.time() - start) * 1000
                 )
@@ -898,7 +898,7 @@ class NetworkValidator:
                     test = TestCase(
                         name="mpls_path_verification",
                         status="PASS",
-                        message=f"Traffic uses MPLS labels (HOST1 -> HOST3)",
+                        message="Traffic uses MPLS labels (HOST1 -> HOST3)",
                         device="HOST1"
                     )
                 else:

@@ -870,6 +870,21 @@ python pyats/tests/test_euniv_network.py --testbed pyats/testbed.yaml --json-out
 python pyats/tests/test_euniv_network.py --testbed pyats/testbed.yaml --device EUNIV-CORE1 -j core1.json
 ```
 
+**pyATS Job-based Validation (Recommended):**
+```bash
+# Run full network validation via pyATS job
+cd pyats
+pyats run job euniv_job.py --testbed-file testbed.yaml
+
+# Generate HTML report
+pyats run job euniv_job.py --testbed-file testbed.yaml --html-logs ./reports
+
+# View logs from last run
+pyats logs view
+```
+
+> **Note**: The pyATS job automatically loads credentials from the `.env` file in the project root. Ensure your `.env` file contains `DEVICE_USERNAME`, `DEVICE_PASSWORD`, and `DEVICE_ENABLE_PASSWORD`.
+
 #### Orchestration Pipeline
 
 ```bash
@@ -1010,6 +1025,7 @@ show bfd neighbors detail
 | 2.0 | 2025-12-03 | Network Team | Deployed BFD on edge links (Core↔INET-GW, AGG↔Edge) with 300ms detection time, added BFD design section, updated pyATS validation tests |
 | 2.1 | 2025-12-03 | Network Team | Deployed HSRP HA on PE router pairs (HSRPv2, 1s hello, 3s hold), added Section 7.4 HSRP design, created configure_ha.py script |
 | 2.2 | 2025-12-03 | Network Team | Added shutdown_unused_interfaces.py script to admin shutdown Gi4 on EDGE devices (unused interfaces causing false alerts). Fixed CPU metric collection in network-monitor for CSR1000V (uses SNMP index .7 instead of .1). Added interactive D3.js topology map to network-monitor frontend. |
+| 2.3 | 2025-12-05 | Network Team | Fixed pyATS credential loading - added load_dotenv() to euniv_job.py for automatic .env file loading. Added device health monitoring job and tests. Code style cleanup across all scripts. |
 
 ---
 

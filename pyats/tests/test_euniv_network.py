@@ -20,20 +20,21 @@ Usage:
     python test_euniv_network.py --testbed testbed.yaml --json-output results.json
 """
 
-import os
-import sys
-import re
 import argparse
-import yaml
 import json
 import logging
+import os
+import re
+import sys
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List
+
+import yaml
 
 # pyATS imports
 try:
-    from pyats.topology import loader
     from genie.libs.parser.utils import get_parser
+    from pyats.topology import loader
     from unicon.core.errors import ConnectionError
 except ImportError:
     print("Please install pyATS: pip install pyats[full]")
@@ -49,19 +50,19 @@ logger = logging.getLogger(__name__)
 
 class TestResult:
     """Store test results."""
-    
+
     def __init__(self, name: str):
         self.name = name
         self.passed = 0
         self.failed = 0
         self.skipped = 0
         self.details: List[Dict] = []
-    
+
     def add_pass(self, message: str, device: str = ""):
         self.passed += 1
         self.details.append({"status": "PASS", "message": message, "device": device})
         logger.info(f"  ✓ PASS: {message}")
-    
+
     def add_fail(self, message: str, device: str = "", expected: Any = None, actual: Any = None):
         self.failed += 1
         detail = {"status": "FAIL", "message": message, "device": device}
@@ -71,16 +72,16 @@ class TestResult:
             detail["actual"] = actual
         self.details.append(detail)
         logger.error(f"  ✗ FAIL: {message}")
-    
+
     def add_skip(self, message: str, device: str = ""):
         self.skipped += 1
         self.details.append({"status": "SKIP", "message": message, "device": device})
         logger.warning(f"  ⊘ SKIP: {message}")
-    
+
     @property
     def total(self) -> int:
         return self.passed + self.failed + self.skipped
-    
+
     def summary(self) -> str:
         status = "PASSED" if self.failed == 0 else "FAILED"
         return f"{self.name}: {status} (Pass: {self.passed}, Fail: {self.failed}, Skip: {self.skipped})"
@@ -100,40 +101,40 @@ class TestResult:
 
 class EUnivNetworkTests:
     """E University Network Validation Tests."""
-    
+
     def __init__(self, testbed_file: str, intent_file: str = None):
         """Initialize test suite."""
         self.testbed = loader.load(testbed_file)
         self.intent = self._load_intent(intent_file)
         self.results: Dict[str, TestResult] = {}
         self.connected_devices: Dict[str, Any] = {}
-    
+
     def _load_intent(self, intent_file: str = None) -> Dict:
         """Load intent data from YAML."""
         if intent_file is None:
             # Default path relative to this script
             script_dir = os.path.dirname(os.path.abspath(__file__))
             intent_file = os.path.join(script_dir, "..", "data", "intent.yaml")
-        
+
         if not os.path.exists(intent_file):
             logger.warning(f"Intent file not found: {intent_file}")
             return {}
-        
+
         with open(intent_file, 'r') as f:
             return yaml.safe_load(f)
-    
+
     def connect_devices(self, device_names: List[str] = None):
         """Connect to devices."""
         if device_names is None:
             device_names = list(self.testbed.devices.keys())
-        
+
         logger.info(f"\nConnecting to {len(device_names)} devices...")
-        
+
         for name in device_names:
             if name not in self.testbed.devices:
                 logger.warning(f"Device {name} not in testbed")
                 continue
-            
+
             device = self.testbed.devices[name]
             try:
                 if not device.is_connected():
@@ -142,7 +143,7 @@ class EUnivNetworkTests:
                 logger.info(f"  ✓ Connected: {name}")
             except Exception as e:
                 logger.error(f"  ✗ Failed to connect to {name}: {e}")
-    
+
     def disconnect_devices(self):
         """Disconnect from all devices."""
         for name, device in self.connected_devices.items():
@@ -150,64 +151,64 @@ class EUnivNetworkTests:
                 device.disconnect()
             except Exception:
                 pass
-    
+
     # =========================================================================
     # TEST: Connectivity
     # =========================================================================
     def test_connectivity(self, devices: List[str] = None) -> TestResult:
         """Test basic connectivity to all devices."""
         result = TestResult("Connectivity")
-        
+
         if devices is None:
             devices = list(self.testbed.devices.keys())
-        
+
         logger.info("\n" + "=" * 60)
         logger.info("TEST: Connectivity")
         logger.info("=" * 60)
-        
+
         for device_name in devices:
             if device_name in self.connected_devices:
                 result.add_pass(f"Connected to {device_name}", device_name)
             else:
                 result.add_fail(f"Could not connect to {device_name}", device_name)
-        
+
         self.results["connectivity"] = result
         return result
-    
+
     # =========================================================================
     # TEST: OSPF
     # =========================================================================
     def test_ospf(self, devices: List[str] = None) -> TestResult:
         """Test OSPF neighbor state."""
         result = TestResult("OSPF")
-        
+
         if devices is None:
             devices = list(self.connected_devices.keys())
-        
+
         logger.info("\n" + "=" * 60)
         logger.info("TEST: OSPF Neighbors")
         logger.info("=" * 60)
-        
+
         for device_name in devices:
             if device_name not in self.connected_devices:
-                result.add_skip(f"Device not connected", device_name)
+                result.add_skip("Device not connected", device_name)
                 continue
-            
+
             device = self.connected_devices[device_name]
-            
+
             try:
                 # Parse OSPF neighbors
                 ospf_neighbors = device.parse("show ip ospf neighbor")
-                
+
                 if not ospf_neighbors:
-                    result.add_fail(f"No OSPF neighbors found", device_name)
+                    result.add_fail("No OSPF neighbors found", device_name)
                     continue
-                
+
                 # Check neighbor states
                 interfaces = ospf_neighbors.get("interfaces", {})
                 all_full = True
                 neighbor_count = 0
-                
+
                 for intf, intf_data in interfaces.items():
                     neighbors = intf_data.get("neighbors", {})
                     for neighbor_id, neighbor_data in neighbors.items():
@@ -221,7 +222,7 @@ class EUnivNetworkTests:
                                 expected="FULL",
                                 actual=state
                             )
-                
+
                 if all_full and neighbor_count > 0:
                     result.add_pass(
                         f"All {neighbor_count} OSPF neighbors in FULL state",
@@ -229,13 +230,13 @@ class EUnivNetworkTests:
                     )
                 elif neighbor_count == 0:
                     result.add_fail("No OSPF neighbors found", device_name)
-                    
+
             except Exception as e:
                 result.add_fail(f"Error parsing OSPF: {e}", device_name)
-        
+
         self.results["ospf"] = result
         return result
-    
+
     # =========================================================================
     # TEST: BGP
     # =========================================================================
@@ -252,7 +253,7 @@ class EUnivNetworkTests:
 
         for device_name in devices:
             if device_name not in self.connected_devices:
-                result.add_skip(f"Device not connected", device_name)
+                result.add_skip("Device not connected", device_name)
                 continue
 
             device = self.connected_devices[device_name]
@@ -313,7 +314,7 @@ class EUnivNetworkTests:
 
         self.results["bgp"] = result
         return result
-    
+
     # =========================================================================
     # TEST: MPLS LDP
     # =========================================================================
@@ -332,7 +333,7 @@ class EUnivNetworkTests:
 
         for device_name in devices:
             if device_name not in self.connected_devices:
-                result.add_skip(f"Device not connected", device_name)
+                result.add_skip("Device not connected", device_name)
                 continue
 
             device = self.connected_devices[device_name]
@@ -389,44 +390,44 @@ class EUnivNetworkTests:
 
             except Exception as e:
                 result.add_skip(f"Could not check LDP: {e}", device_name)
-        
+
         self.results["mpls_ldp"] = result
         return result
-    
+
     # =========================================================================
     # TEST: VRF
     # =========================================================================
     def test_vrf(self, devices: List[str] = None) -> TestResult:
         """Test VRF configuration."""
         result = TestResult("VRF")
-        
+
         if devices is None:
             # Only test PE devices
             devices = [d for d in self.connected_devices.keys() if "PE" in d]
-        
+
         logger.info("\n" + "=" * 60)
         logger.info("TEST: VRF Configuration")
         logger.info("=" * 60)
-        
+
         expected_vrfs = ["STUDENT-NET", "STAFF-NET", "RESEARCH-NET", "MEDICAL-NET", "GUEST-NET"]
-        
+
         for device_name in devices:
             if device_name not in self.connected_devices:
-                result.add_skip(f"Device not connected", device_name)
+                result.add_skip("Device not connected", device_name)
                 continue
-            
+
             device = self.connected_devices[device_name]
-            
+
             try:
                 # Parse VRF detail
                 vrf_detail = device.parse("show vrf detail")
-                
+
                 if not vrf_detail:
-                    result.add_fail(f"No VRF data found", device_name)
+                    result.add_fail("No VRF data found", device_name)
                     continue
-                
+
                 configured_vrfs = list(vrf_detail.keys())
-                
+
                 # Check which expected VRFs are present
                 for vrf_name in expected_vrfs:
                     if vrf_name in configured_vrfs:
@@ -437,18 +438,18 @@ class EUnivNetworkTests:
                             device_name
                         )
                     # Note: Not all VRFs on all PEs, so we don't fail here
-                
+
                 result.add_pass(
                     f"Found {len(configured_vrfs)} VRFs configured",
                     device_name
                 )
-                    
+
             except Exception as e:
                 result.add_fail(f"Error parsing VRF: {e}", device_name)
-        
+
         self.results["vrf"] = result
         return result
-    
+
     # =========================================================================
     # TEST: Loopback Reachability
     # =========================================================================
@@ -512,7 +513,7 @@ class EUnivNetworkTests:
 
         self.results["loopback_reachability"] = result
         return result
-    
+
     # =========================================================================
     # TEST: Interface Status
     # =========================================================================
@@ -529,7 +530,7 @@ class EUnivNetworkTests:
 
         for device_name in devices:
             if device_name not in self.connected_devices:
-                result.add_skip(f"Device not connected", device_name)
+                result.add_skip("Device not connected", device_name)
                 continue
 
             device = self.connected_devices[device_name]
@@ -583,7 +584,7 @@ class EUnivNetworkTests:
 
         self.results["interfaces"] = result
         return result
-    
+
     # =========================================================================
     # Run All Tests
     # =========================================================================
@@ -593,10 +594,10 @@ class EUnivNetworkTests:
         logger.info("E UNIVERSITY NETWORK VALIDATION")
         logger.info(f"Started: {datetime.now().isoformat()}")
         logger.info("=" * 70)
-        
+
         # Connect to devices
         self.connect_devices(devices)
-        
+
         # Run tests
         self.test_connectivity(devices)
         self.test_interfaces(devices)
@@ -604,17 +605,17 @@ class EUnivNetworkTests:
         self.test_bgp(devices)
         self.test_mpls_ldp(devices)
         self.test_vrf(devices)
-        
+
         # Only run reachability if we have connectivity
         if self.results.get("connectivity") and self.results["connectivity"].passed > 0:
             self.test_loopback_reachability()
-        
+
         # Disconnect
         self.disconnect_devices()
-        
+
         # Print summary
         self.print_summary()
-    
+
     def print_summary(self):
         """Print test summary."""
         logger.info("\n" + "=" * 70)
@@ -688,13 +689,13 @@ def main():
     parser.add_argument("--device", help="Specific device to test (default: all)")
     parser.add_argument("--json-output", "-j", help="Export results to JSON file (e.g., results.json)")
     args = parser.parse_args()
-    
+
     # Initialize test suite
     tests = EUnivNetworkTests(args.testbed, args.intent)
-    
+
     # Determine devices to test
     devices = [args.device] if args.device else None
-    
+
     # Run tests
     if args.test == "all":
         tests.run_all_tests(devices)

@@ -18,15 +18,15 @@ Usage:
 """
 
 import argparse
-import sys
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
 
 class PipelineOrchestrator:
     """Orchestrates the full deployment pipeline."""
-    
+
     def __init__(self):
         self.base_dir = Path(__file__).parent.parent
         self.scripts_dir = self.base_dir / "scripts"
@@ -36,7 +36,7 @@ class PipelineOrchestrator:
             "deploy": None,
             "post_validate": None,
         }
-    
+
     def print_header(self, title: str):
         """Print a formatted header."""
         print()
@@ -44,24 +44,24 @@ class PipelineOrchestrator:
         print(f"║  {title:64}  ║")
         print("╚" + "═" * 68 + "╝")
         print()
-    
+
     def run_step(self, name: str, script: str, args: list = None) -> bool:
         """Run a pipeline step."""
         args = args or []
         cmd = [sys.executable, str(self.scripts_dir / script)] + args
-        
+
         print(f"Running: {' '.join(cmd)}")
         print("-" * 60)
-        
+
         result = subprocess.run(cmd, cwd=str(self.base_dir))
-        
+
         self.results[name] = result.returncode == 0
         return result.returncode == 0
-    
+
     def show_plan(self):
         """Show what the pipeline would do."""
         self.print_header("DEPLOYMENT PLAN")
-        
+
         print("""
 This pipeline will execute the following steps:
 
@@ -111,21 +111,21 @@ This pipeline will execute the following steps:
 │  • Rollback instructions if needed                                 │
 └─────────────────────────────────────────────────────────────────────┘
 """)
-    
+
     def execute_pipeline(self, skip_deploy: bool = False):
         """Execute the full pipeline."""
         start_time = datetime.now()
-        
+
         self.print_header("NETWORK AUTOMATION PIPELINE")
         print(f"Started: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"Base Dir: {self.base_dir}")
-        
+
         # Step 1: Generate Configs
         self.print_header("STEP 1: GENERATE CONFIGURATIONS")
         if not self.run_step("generate", "generate_configs.py"):
             print("\n❌ Config generation failed! Aborting pipeline.")
             return False
-        
+
         # Step 2: Pre-Validation
         self.print_header("STEP 2: PRE-DEPLOYMENT VALIDATION")
         if not self.run_step("pre_validate", "validate.py", ["--pre"]):
@@ -134,15 +134,15 @@ This pipeline will execute the following steps:
             if proceed.lower() != "yes":
                 print("Pipeline aborted.")
                 return False
-        
+
         # Step 3: Deploy
         if not skip_deploy:
             self.print_header("STEP 3: DEPLOY CONFIGURATIONS")
-            
+
             # First show diff
             print("Showing configuration diff...\n")
             self.run_step("diff", "deploy.py", ["--diff"])
-            
+
             print("\n" + "=" * 60)
             proceed = input("\nProceed with deployment? (yes/no): ")
             if proceed.lower() != "yes":
@@ -155,46 +155,46 @@ This pipeline will execute the following steps:
                     return False
         else:
             print("\n[Skipping deployment - dry run mode]")
-        
+
         # Step 4: Post-Validation
         if self.results.get("deploy"):
             self.print_header("STEP 4: POST-DEPLOYMENT VALIDATION")
             if not self.run_step("post_validate", "validate.py", ["--post"]):
                 print("\n⚠️  Post-validation found issues!")
                 print("Review the failures and consider rollback if needed.")
-        
+
         # Step 5: Summary
         end_time = datetime.now()
         duration = end_time - start_time
-        
+
         self.print_header("PIPELINE SUMMARY")
-        
+
         print(f"Duration: {duration}")
         print()
         print("Step Results:")
         print(f"  1. Generate Configs:    {'✓ PASS' if self.results.get('generate') else '✗ FAIL'}")
         print(f"  2. Pre-Validation:      {'✓ PASS' if self.results.get('pre_validate') else '✗ FAIL'}")
-        
+
         deploy_status = self.results.get('deploy')
         if deploy_status is None:
-            print(f"  3. Deploy:              - SKIPPED")
+            print("  3. Deploy:              - SKIPPED")
         else:
             print(f"  3. Deploy:              {'✓ PASS' if deploy_status else '✗ FAIL'}")
-        
+
         post_status = self.results.get('post_validate')
         if post_status is None:
-            print(f"  4. Post-Validation:     - SKIPPED")
+            print("  4. Post-Validation:     - SKIPPED")
         else:
             print(f"  4. Post-Validation:     {'✓ PASS' if post_status else '✗ FAIL'}")
-        
+
         print()
-        
+
         # Overall result
         all_passed = all(
-            v is True or v is None 
+            v is True or v is None
             for v in self.results.values()
         )
-        
+
         if all_passed:
             print("═" * 60)
             print("  ✓ PIPELINE COMPLETED SUCCESSFULLY")
@@ -205,7 +205,7 @@ This pipeline will execute the following steps:
             print("═" * 60)
             print("\nTo rollback a device:")
             print("  python scripts/deploy.py --rollback DEVICE_NAME")
-        
+
         print()
         return all_passed
 
@@ -227,11 +227,11 @@ Examples:
     parser.add_argument("--generate-only", action="store_true", help="Only generate configs")
     parser.add_argument("--validate-only", action="store_true", help="Only run validation")
     parser.add_argument("--dry-run", action="store_true", help="Run pipeline without deploying")
-    
+
     args = parser.parse_args()
-    
+
     orchestrator = PipelineOrchestrator()
-    
+
     if args.plan:
         orchestrator.show_plan()
     elif args.generate_only:

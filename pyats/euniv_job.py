@@ -29,17 +29,18 @@ Example with all options:
         --job-uid euniv-$(date +%Y%m%d-%H%M%S)
 """
 
-import os
 import logging
-from pyats.easypy import run
+import os
 
+from pyats.easypy import run
+from dotenv import load_dotenv
 # Get logger
 log = logging.getLogger(__name__)
 
 # Define the test script location (relative to this jobfile)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 AETEST_SCRIPT = os.path.join(SCRIPT_DIR, 'tests', 'euniv_aetest.py')
-
+load_dotenv()
 
 def main(runtime):
     """

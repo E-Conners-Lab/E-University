@@ -14,6 +14,7 @@ Environment Variables:
 
 import os
 import sys
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -137,7 +138,7 @@ def add_hosts_to_netbox(url: str, token: str):
         # Check if device exists
         existing = nb.dcim.devices.get(name=host_name)
         if existing:
-            print(f"  -> Device already exists, updating...")
+            print("  -> Device already exists, updating...")
             device = existing
         else:
             # Create device
@@ -156,7 +157,7 @@ def add_hosts_to_netbox(url: str, token: str):
                 device_data["platform"] = platform.id
 
             device = nb.dcim.devices.create(device_data)
-            print(f"  + Created device")
+            print("  + Created device")
 
         # Create interfaces if they don't exist
         interfaces_to_create = [
@@ -239,7 +240,7 @@ def add_hosts_to_netbox(url: str, token: str):
                 except Exception as e:
                     print(f"  ! Cable error: {e}")
             else:
-                print(f"  -> Cable already exists or interfaces not ready")
+                print("  -> Cable already exists or interfaces not ready")
 
     print("\n" + "=" * 60)
     print("Host router addition complete!")

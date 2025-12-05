@@ -12,8 +12,8 @@ Correctly handles:
 - Aggregation routers - OSPF BFD only
 """
 
+
 from pyats.topology import loader
-import time
 
 # Router classifications
 ROUTE_REFLECTORS = ["EUNIV-CORE1", "EUNIV-CORE2"]

@@ -29,14 +29,14 @@ Output JSON structure:
 
 import argparse
 import json
+import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Optional
 
-import os
 from dotenv import load_dotenv
 from netmiko import ConnectHandler
 
@@ -290,7 +290,7 @@ def measure_throughput(conn: ConnectHandler, source_name: str, dest_name: str) -
             result.throughput_mbps = round(result.throughput_bps / 1_000_000, 4)
             result.success = True
 
-    except Exception as e:
+    except Exception:
         result.success = False
 
     return result

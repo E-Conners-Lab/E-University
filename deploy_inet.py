@@ -7,9 +7,10 @@ Run: python3 deploy_internet.py
 """
 
 import os
+import time
+
 from dotenv import load_dotenv
 from pyats.topology import loader
-import time
 
 # Load environment variables
 load_dotenv()
@@ -200,7 +201,6 @@ router bgp 65000
 
 def main():
     import tempfile
-    import os
 
     print("=" * 70)
     print("E-UNIVERSITY - INTERNET GATEWAY DEPLOYMENT")

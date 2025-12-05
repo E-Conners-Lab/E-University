@@ -67,7 +67,7 @@ end
 def main():
     output_dir = "eve-ng/startup-configs"
     os.makedirs(output_dir, exist_ok=True)
-    
+
     for hostname, data in DEVICES.items():
         config = STARTUP_TEMPLATE.format(
             hostname=hostname,
@@ -75,12 +75,12 @@ def main():
             mgmt_ip=data["mgmt_ip"],
             loopback=data["loopback"]
         )
-        
+
         filepath = os.path.join(output_dir, f"{hostname}.cfg")
         with open(filepath, "w") as f:
             f.write(config)
         print(f"✓ Created: {filepath}")
-    
+
     print(f"\n✓ Generated {len(DEVICES)} startup configs")
 
 if __name__ == "__main__":

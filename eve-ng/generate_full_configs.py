@@ -78,7 +78,7 @@ DEVICES = {
         },
         "bgp_neighbors": ["10.255.0.1", "10.255.0.2", "10.255.0.3", "10.255.0.4", "10.255.3.1"]
     },
-    
+
     # Internet Gateways
     "EUNIV-INET-GW1": {
         "mgmt_ip": "192.168.68.206",
@@ -100,7 +100,7 @@ DEVICES = {
         },
         "bgp_neighbors": ["10.255.0.1", "10.255.0.2"]
     },
-    
+
     # Main Campus
     "EUNIV-MAIN-AGG1": {
         "mgmt_ip": "192.168.68.208",
@@ -139,7 +139,7 @@ DEVICES = {
         "bgp_neighbors": ["10.255.1.1"],
         "vrfs": ["STUDENT-NET", "STAFF-NET", "RESEARCH-NET", "GUEST-NET"]
     },
-    
+
     # Medical Campus
     "EUNIV-MED-AGG1": {
         "mgmt_ip": "192.168.68.211",
@@ -178,7 +178,7 @@ DEVICES = {
         "bgp_neighbors": ["10.255.2.1"],
         "vrfs": ["STAFF-NET", "RESEARCH-NET", "MEDICAL-NET", "GUEST-NET"]
     },
-    
+
     # Research Campus
     "EUNIV-RES-AGG1": {
         "mgmt_ip": "192.168.68.214",
@@ -231,7 +231,7 @@ VRFS = {
 
 def generate_config(hostname, data):
     """Generate full configuration for a device."""
-    
+
     config = f"""!
 ! =====================================================================
 ! {hostname} - Full Configuration
@@ -387,7 +387,7 @@ router bgp {data['asn']}
         # Determine if iBGP or eBGP based on ASN
         # Core (65000), Main (65100), Medical (65200), Research (65300)
         neighbor_asn = data['asn']  # Default to same ASN (iBGP)
-        
+
         config += f" neighbor {neighbor} remote-as {neighbor_asn}\n"
         config += f" neighbor {neighbor} update-source Loopback0\n"
 
@@ -456,15 +456,15 @@ end
 def main():
     output_dir = "eve-ng/full-configs"
     os.makedirs(output_dir, exist_ok=True)
-    
+
     for hostname, data in DEVICES.items():
         config = generate_config(hostname, data)
-        
+
         filepath = os.path.join(output_dir, f"{hostname}.cfg")
         with open(filepath, "w") as f:
             f.write(config)
         print(f"✓ Created: {filepath}")
-    
+
     print(f"\n✓ Generated {len(DEVICES)} full configurations")
 
 

@@ -20,10 +20,10 @@ Environment Variables:
     PYATS_PASS      - Device SSH password (optional)
 """
 
+import argparse
 import os
 import sys
-import argparse
-from typing import Optional
+
 from dotenv import load_dotenv
 
 # Load .env file if present

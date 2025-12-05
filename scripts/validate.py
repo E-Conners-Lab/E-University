@@ -13,12 +13,11 @@ Usage:
 
 import argparse
 import sys
-from datetime import datetime
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Optional
 
 from pyats.topology import loader
-from genie.libs.parser.utils import get_parser
 
 
 @dataclass
@@ -266,7 +265,7 @@ class NetworkValidator:
                     ))
                     print(f"  ✗ {name} - no OSPF neighbors")
 
-            except Exception as e:
+            except Exception:
                 # No OSPF configured yet is OK for pre-checks
                 report.add(TestResult(
                     name="OSPF Neighbors",
@@ -350,7 +349,7 @@ class NetworkValidator:
                     ))
                     print(f"  ✗ {name} - no BGP sessions established")
 
-            except Exception as e:
+            except Exception:
                 report.add(TestResult(
                     name="BGP Sessions",
                     device=name,
@@ -413,7 +412,7 @@ class NetworkValidator:
                     ))
                     print(f"  ✗ {name} - no LDP neighbors")
 
-            except Exception as e:
+            except Exception:
                 report.add(TestResult(
                     name="MPLS LDP Neighbors",
                     device=name,

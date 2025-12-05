@@ -16,12 +16,13 @@ Author: E-University Network Team
 ═══════════════════════════════════════════════════════════════════════════════
 """
 
+import base64
 import os
+import zipfile
+from datetime import datetime
+
 from dotenv import load_dotenv
 from netmiko import ConnectHandler
-import base64
-from datetime import datetime
-import zipfile
 
 # Load environment variables
 load_dotenv()
@@ -65,7 +66,7 @@ def connect(name, ip):
         conn = ConnectHandler(**device)
         conn.enable()
         return conn
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -185,7 +186,7 @@ def main():
             conn.disconnect()
             print(f"✓ {len(config):,} bytes - {info['role']}")
         else:
-            print(f"✗ Connection failed!")
+            print("✗ Connection failed!")
 
     print()
     print(f"  Successfully exported: {len(configs)}/16 devices")
@@ -294,9 +295,9 @@ def main():
     print("  OUTPUT FILES:")
     print("  ─────────────────────────────────────────────────────────────────")
     print(f"  📁 {OUTPUT_DIR}/")
-    print(f"     ├── configs/              (16 individual .cfg files)")
-    print(f"     ├── ALL-CONFIGS-REFERENCE.txt")
-    print(f"     └── E-University-Network-Baseline.unl")
+    print("     ├── configs/              (16 individual .cfg files)")
+    print("     ├── ALL-CONFIGS-REFERENCE.txt")
+    print("     └── E-University-Network-Baseline.unl")
     print()
     print(f"  📦 {zip_path}  (complete archive)")
     print()
