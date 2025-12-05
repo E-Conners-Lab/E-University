@@ -1,0 +1,73 @@
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: euniv-influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=euniv-telemetry-2024
+      - DOCKER_INFLUXDB_INIT_ORG=euniv
+      - DOCKER_INFLUXDB_INIT_BUCKET=network_telemetry
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=euniv-super-secret-token
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    networks:
+      - telemetry-net
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: euniv-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=euniv-grafana
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - telemetry-net
+    depends_on:
+      influxdb:
+        condition: service_healthy
+
+  collector:
+    build:
+      context: ./collector
+      dockerfile: Dockerfile
+    container_name: euniv-collector
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=euniv-super-secret-token
+      - INFLUXDB_ORG=euniv
+      - INFLUXDB_BUCKET=network_telemetry
+      - DEVICE_USERNAME=${DEVICE_USERNAME}
+      - DEVICE_PASSWORD=${DEVICE_PASSWORD}
+      - DEVICE_ENABLE_PASSWORD=${DEVICE_ENABLE_PASSWORD}
+      - COLLECTION_INTERVAL=30
+    volumes:
+      - ../pyats:/app/pyats:ro
+    networks:
+      - telemetry-net
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  influxdb-data:
+  grafana-data:
+
+networks:
+  telemetry-net:
+    driver: bridge
