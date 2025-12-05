@@ -20,9 +20,10 @@
 8. [VRF Design](#8-vrf-design)
 9. [Configuration Standards](#9-configuration-standards)
 10. [Management & Monitoring](#10-management--monitoring)
-11. [Security Design](#11-security-design)
-12. [Automation Framework](#12-automation-framework)
-13. [Appendix](#13-appendix)
+11. [Streaming Telemetry](#11-streaming-telemetry)
+12. [Security Design](#12-security-design)
+13. [Automation Framework](#13-automation-framework)
+14. [Appendix](#14-appendix)
 
 ---
 
@@ -465,32 +466,43 @@ HSRP runs on **GigabitEthernet3 subinterfaces** - the existing inter-PE link. Us
 | Version | HSRPv2 |
 | Hello Timer | 1 second |
 | Hold Timer | 3 seconds |
-| Preempt Delay | 30 seconds (primary only) |
+| Preempt Delay | 30 seconds |
 
-#### HSRP Groups by Campus
+#### HSRP Load Balancing Strategy
 
-**Main Campus (10.100.x.x)**
-| VLAN | VRF | Virtual IP | EDGE1 IP | EDGE2 IP |
-|------|-----|------------|----------|----------|
-| 100 | STUDENT-NET | 10.100.1.1 | 10.100.1.2 | 10.100.1.3 |
-| 200 | STAFF-NET | 10.100.2.1 | 10.100.2.2 | 10.100.2.3 |
-| 300 | RESEARCH-NET | 10.100.3.1 | 10.100.3.2 | 10.100.3.3 |
-| 500 | GUEST-NET | 10.100.5.1 | 10.100.5.2 | 10.100.5.3 |
+Traffic is distributed across EDGE1 and EDGE2 by assigning different active routers per VLAN:
 
-**Medical Campus (10.200.x.x)**
-| VLAN | VRF | Virtual IP | EDGE1 IP | EDGE2 IP |
-|------|-----|------------|----------|----------|
-| 200 | STAFF-NET | 10.200.2.1 | 10.200.2.2 | 10.200.2.3 |
-| 300 | RESEARCH-NET | 10.200.3.1 | 10.200.3.2 | 10.200.3.3 |
-| 400 | MEDICAL-NET | 10.200.4.1 | 10.200.4.2 | 10.200.4.3 |
-| 500 | GUEST-NET | 10.200.5.1 | 10.200.5.2 | 10.200.5.3 |
+| VLANs | Active Router | Priority |
+|-------|---------------|----------|
+| 100 (STUDENT), 300 (RESEARCH) | EDGE1 | 150 |
+| 200 (STAFF), 400 (MEDICAL), 500 (GUEST) | EDGE2 | 150 |
 
-**Research Campus (10.103.x.x)**
-| VLAN | VRF | Virtual IP | EDGE1 IP | EDGE2 IP |
-|------|-----|------------|----------|----------|
-| 200 | STAFF-NET | 10.103.2.1 | 10.103.2.2 | 10.103.2.3 |
-| 300 | RESEARCH-NET | 10.103.3.1 | 10.103.3.2 | 10.103.3.3 |
-| 500 | GUEST-NET | 10.103.5.1 | 10.103.5.2 | 10.103.5.3 |
+Standby routers use priority 100 and preempt after 30 seconds.
+
+#### HSRP Groups by Campus (11 total)
+
+**Main Campus** - IP scheme: `10.{vlan/10}.1.x`
+| VLAN | VRF | EDGE1 IP | EDGE2 IP | Virtual IP | Active |
+|------|-----|----------|----------|------------|--------|
+| 100 | STUDENT-NET | 10.10.1.1 | 10.10.1.2 | 10.10.1.254 | EDGE1 |
+| 200 | STAFF-NET | 10.20.1.1 | 10.20.1.2 | 10.20.1.254 | EDGE2 |
+| 300 | RESEARCH-NET | 10.30.1.1 | 10.30.1.2 | 10.30.1.254 | EDGE1 |
+| 500 | GUEST-NET | 10.50.1.1 | 10.50.1.2 | 10.50.1.254 | EDGE2 |
+
+**Medical Campus** - IP scheme: `10.{vlan/10}.2.x`
+| VLAN | VRF | EDGE1 IP | EDGE2 IP | Virtual IP | Active |
+|------|-----|----------|----------|------------|--------|
+| 200 | STAFF-NET | 10.20.2.1 | 10.20.2.2 | 10.20.2.254 | EDGE2 |
+| 300 | RESEARCH-NET | 10.30.2.1 | 10.30.2.2 | 10.30.2.254 | EDGE1 |
+| 400 | MEDICAL-NET | 10.40.2.1 | 10.40.2.2 | 10.40.2.254 | EDGE2 |
+| 500 | GUEST-NET | 10.50.2.1 | 10.50.2.2 | 10.50.2.254 | EDGE2 |
+
+**Research Campus** - IP scheme: `10.{vlan/10}.3.x`
+| VLAN | VRF | EDGE1 IP | EDGE2 IP | Virtual IP | Active |
+|------|-----|----------|----------|------------|--------|
+| 200 | STAFF-NET | 10.20.3.1 | 10.20.3.2 | 10.20.3.254 | EDGE2 |
+| 300 | RESEARCH-NET | 10.30.3.1 | 10.30.3.2 | 10.30.3.254 | EDGE1 |
+| 500 | GUEST-NET | 10.50.3.1 | 10.50.3.2 | 10.50.3.254 | EDGE2 |
 
 #### HSRP Configuration Example
 
@@ -731,9 +743,89 @@ Format: `To <PEER-HOSTNAME>`
 
 ---
 
-## 11. Security Design
+## 11. Streaming Telemetry
 
-### 11.1 VTY Access Control
+Real-time network observability using a containerized telemetry stack.
+
+### 11.1 Architecture
+
+```
+┌─────────────────┐    SSH/CLI     ┌─────────────────┐
+│  Network        │◄──────────────►│   Collector     │
+│  Devices (16)   │                │   (Python)      │
+└─────────────────┘                └────────┬────────┘
+                                           │
+                                           ▼
+                                  ┌─────────────────┐
+                                  │   InfluxDB 2.x  │
+                                  │   (Time-Series) │
+                                  └────────┬────────┘
+                                           │
+                                           ▼
+                                  ┌─────────────────┐
+                                  │   Grafana       │
+                                  │   (Dashboards)  │
+                                  └─────────────────┘
+```
+
+### 11.2 Stack Components
+
+| Component | Container | Port | Purpose |
+|-----------|-----------|------|---------|
+| **InfluxDB 2.7** | `euniv-influxdb` | 8086 | Time-series database |
+| **Grafana 10.2** | `euniv-grafana` | 3001 | Visualization dashboards |
+| **Collector** | `euniv-collector` | - | Python/Netmiko polling |
+
+### 11.3 Metrics Collected
+
+| Category | Metrics | Collection Interval |
+|----------|---------|---------------------|
+| **Device Health** | CPU (5s, 1m, 5m avg), Memory (%), Reachability | 30s |
+| **Interface Stats** | Input/output packets, bit rates, errors | 30s |
+| **OSPF** | Neighbor count, full adjacencies | 30s |
+| **BGP** | Session state, prefix counts per neighbor | 30s |
+| **BFD** | Sessions up/down count | 30s |
+| **HSRP** | Active/Standby state per group (11 groups) | 30s |
+
+### 11.4 Quick Start
+
+```bash
+cd telemetry
+
+# First time - build and start
+./start.sh --build
+
+# Subsequent runs
+./start.sh
+
+# View collector logs
+./start.sh --logs collector
+
+# Stop everything
+./start.sh --stop
+```
+
+### 11.5 Access URLs
+
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| Grafana | http://localhost:3001 | admin / euniv-grafana |
+| InfluxDB | http://localhost:8086 | admin / euniv-telemetry-2024 |
+
+### 11.6 Grafana Dashboard Panels
+
+The pre-configured dashboard (`network-overview.json`) includes:
+- Device reachability status grid (UP/DOWN per device)
+- CPU/Memory utilization time series with thresholds
+- Devices up by campus (bar gauge)
+- Protocol health: OSPF neighbors, BGP sessions, BFD status
+- HSRP active groups across all campuses
+
+---
+
+## 12. Security Design
+
+### 12.1 VTY Access Control
 
 ```
 ip access-list standard VTY-ACCESS
@@ -748,7 +840,7 @@ line vty 0 15
  exec-timeout 30 0
 ```
 
-### 11.2 Credential Management
+### 12.2 Credential Management
 
 | Account | Purpose | Privilege |
 |---------|---------|-----------|
@@ -766,7 +858,31 @@ vim .env
 
 The pyATS testbed files use `%ENV{VAR_NAME}` syntax to reference credentials from the environment.
 
-### 11.3 SSH Configuration
+### 12.3 Secure Credential Wrappers
+
+For production-grade security, wrapper scripts load credentials from **macOS Keychain** instead of environment files:
+
+```bash
+# Store credentials in Keychain (one-time setup)
+security add-generic-password -a "$USER" -s "euniv-username" -w "your-username"
+security add-generic-password -a "$USER" -s "euniv-password" -w "your-password"
+security add-generic-password -a "$USER" -s "euniv-enable" -w "your-enable-password"
+
+# Run pyATS tests with secure credentials
+cd pyats
+./run.sh hsrp_job.py --testbed-file testbed.yaml
+
+# Run deployment scripts with secure credentials
+cd scripts
+./run.sh configure_hsrp.py --testbed ../pyats/testbed.yaml
+```
+
+The wrapper scripts (`pyats/run.sh`, `scripts/run.sh`) automatically:
+1. Retrieve credentials from macOS Keychain
+2. Export them as environment variables
+3. Execute the specified script
+
+### 12.4 SSH Configuration
 
 - SSH Version 2 only
 - RSA key: 2048 bits
@@ -774,15 +890,15 @@ The pyATS testbed files use `%ENV{VAR_NAME}` syntax to reference credentials fro
 
 ---
 
-## 12. Automation Framework
+## 13. Automation Framework
 
-### 12.1 Source of Truth
+### 13.1 Source of Truth
 
 **NetBox** (Cloud-hosted)
 - URL: https://'<your-netbox-website-address>'
 - Contains: Device inventory, IPs, connections, custom fields
 
-### 12.2 Configuration Pipeline
+### 13.2 Configuration Pipeline
 
 ```
 ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
@@ -791,7 +907,7 @@ The pyATS testbed files use `%ENV{VAR_NAME}` syntax to reference credentials fro
 └──────────┘     └──────────┘     └──────────┘     └──────────┘
 ```
 
-### 12.3 Automation Scripts
+### 13.3 Automation Scripts
 
 #### Core Scripts
 
@@ -901,7 +1017,7 @@ python orchestrate.py --generate-only
 python orchestrate.py --validate-only
 ```
 
-### 12.4 Validation Tests
+### 13.4 Validation Tests
 
 | Test | Description |
 |------|-------------|
@@ -914,7 +1030,7 @@ python orchestrate.py --validate-only
 | BFD | All BFD neighbors up with correct timers |
 | Internet | Gateway reachability and BGP to upstream |
 
-### 12.5 NetBox Integration
+### 13.5 NetBox Integration
 
 Populate NetBox with device inventory using:
 
@@ -929,7 +1045,7 @@ python netbox/populate_euniv.py --cleanup
 python netbox/populate_euniv.py --verify
 ```
 
-### 12.6 EVE-NG Lab Integration
+### 13.6 EVE-NG Lab Integration
 
 The project includes complete EVE-NG lab configurations:
 
@@ -956,9 +1072,9 @@ python eve-ng/generate_full_configs.py
 
 ---
 
-## 13. Appendix
+## 14. Appendix
 
-### 13.1 Verification Commands
+### 14.1 Verification Commands
 
 ```bash
 # OSPF
@@ -985,7 +1101,7 @@ show bfd neighbors
 show bfd neighbors detail
 ```
 
-### 13.2 Troubleshooting Checklist
+### 14.2 Troubleshooting Checklist
 
 1. **No OSPF Neighbors**
    - Check physical connectivity
@@ -1008,7 +1124,7 @@ show bfd neighbors detail
    - Confirm OSPF neighbor is FULL (BFD requires OSPF)
    - Check for hardware/platform BFD support
 
-### 13.3 Document Revision History
+### 14.3 Document Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
@@ -1026,6 +1142,7 @@ show bfd neighbors detail
 | 2.1 | 2025-12-03 | Network Team | Deployed HSRP HA on PE router pairs (HSRPv2, 1s hello, 3s hold), added Section 7.4 HSRP design, created configure_ha.py script |
 | 2.2 | 2025-12-03 | Network Team | Added shutdown_unused_interfaces.py script to admin shutdown Gi4 on EDGE devices (unused interfaces causing false alerts). Fixed CPU metric collection in network-monitor for CSR1000V (uses SNMP index .7 instead of .1). Added interactive D3.js topology map to network-monitor frontend. |
 | 2.3 | 2025-12-05 | Network Team | Fixed pyATS credential loading - added load_dotenv() to euniv_job.py for automatic .env file loading. Added device health monitoring job and tests. Code style cleanup across all scripts. |
+| 3.0 | 2025-12-05 | Network Team | Added streaming telemetry stack (Grafana + InfluxDB + Python collector) for real-time network observability. Implemented HSRP gateway redundancy across all 3 campuses with load balancing (11 groups). Added pyATS HSRP validation tests. Created secure credential wrappers using macOS Keychain. Added chaos testing and IPv6 deployment scripts. |
 
 ---
 
