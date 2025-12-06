@@ -1,9 +1,9 @@
 
 # E-University Network Design Document
 
-**Document Version:** 1.0  
-**Date:** November 27, 2025  
-**Author:** Network Engineering Team  
+**Document Version:** 1.0
+**Date:** November 27, 2025
+**Author:** Network Engineering Team
 **Classification:** Internal Use
 
 ---
@@ -809,8 +809,8 @@ cd telemetry
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| Grafana | http://localhost:3001 | admin / euniv-grafana |
-| InfluxDB | http://localhost:8086 | admin / euniv-telemetry-2024 |
+| Grafana | http://localhost:3001 | See `telemetry/.env` |
+| InfluxDB | http://localhost:8086 | See `telemetry/.env` |
 
 ### 11.6 Grafana Dashboard Panels
 

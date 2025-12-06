@@ -1,0 +1,42 @@
+# Gitleaks configuration for E-University Network Lab
+# https://github.com/gitleaks/gitleaks
+
+title = "E-University Lab Gitleaks Config"
+
+[allowlist]
+description = "Allowlisted files and patterns"
+
+# Allow example files with placeholder values
+paths = [
+    '''\.env\.example$''',
+    '''telemetry/\.env\.example$''',
+]
+
+# Allow documentation that references credential patterns
+regexes = [
+    '''<your-.*>''',
+    '''CHANGEME.*''',
+    '''your-.*-here''',
+]
+
+# Custom rules to detect lab-specific patterns
+[[rules]]
+id = "euniv-hardcoded-password"
+description = "Hardcoded password pattern"
+regex = '''(?i)(password|passwd|pwd)\s*[=:]\s*['"]?[^'"${\s_()]{8,}['"]?'''
+tags = ["password", "security"]
+# Exclude variable names like DEVICE_PASSWORD = _require_env(...)
+allowlist = { regexes = ['''_require_env\(''', '''os\.getenv\(''', '''os\.environ'''] }
+
+[[rules]]
+id = "euniv-snmp-community"
+description = "SNMP community string in code"
+regex = '''snmp.*community\s+[a-zA-Z0-9_-]{6,}'''
+tags = ["snmp", "security"]
+allowlist = { paths = ['''\.j2$''', '''\.example$'''] }
+
+[[rules]]
+id = "influxdb-token"
+description = "InfluxDB token pattern"
+regex = '''(?i)influxdb.*token\s*[=:]\s*['"]?[^'"${\s]{20,}['"]?'''
+tags = ["token", "security"]

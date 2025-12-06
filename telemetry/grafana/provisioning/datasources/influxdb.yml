@@ -12,5 +12,5 @@ datasources:
       defaultBucket: network_telemetry
       tlsSkipVerify: true
     secureJsonData:
-      token: euniv-super-secret-token
+      token: $__env{INFLUXDB_TOKEN}
     isDefault: true

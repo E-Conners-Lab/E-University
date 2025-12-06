@@ -31,14 +31,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Environment configuration
+# Environment configuration - credentials MUST be provided via environment
+def _require_env(name: str) -> str:
+    """Require an environment variable to be set."""
+    value = os.getenv(name)
+    if not value:
+        raise EnvironmentError(f"Required environment variable {name} is not set")
+    return value
+
 INFLUXDB_URL = os.getenv('INFLUXDB_URL', 'http://localhost:8086')
-INFLUXDB_TOKEN = os.getenv('INFLUXDB_TOKEN', 'euniv-super-secret-token')
+INFLUXDB_TOKEN = _require_env('INFLUXDB_TOKEN')
 INFLUXDB_ORG = os.getenv('INFLUXDB_ORG', 'euniv')
 INFLUXDB_BUCKET = os.getenv('INFLUXDB_BUCKET', 'network_telemetry')
-DEVICE_USERNAME = os.getenv('DEVICE_USERNAME', 'admin')
-DEVICE_PASSWORD = os.getenv('DEVICE_PASSWORD', 'admin')
-DEVICE_ENABLE_PASSWORD = os.getenv('DEVICE_ENABLE_PASSWORD', 'admin')
+DEVICE_USERNAME = _require_env('DEVICE_USERNAME')
+DEVICE_PASSWORD = _require_env('DEVICE_PASSWORD')
+DEVICE_ENABLE_PASSWORD = _require_env('DEVICE_ENABLE_PASSWORD')
 COLLECTION_INTERVAL = int(os.getenv('COLLECTION_INTERVAL', '30'))
 
 

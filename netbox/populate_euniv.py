@@ -14,10 +14,10 @@ Usage:
     python populate_euniv.py --action verify     # Check what exists
 
 Environment Variables:
-    NETBOX_URL      - NetBox instance URL
-    NETBOX_TOKEN    - API token
-    PYATS_USER      - Device SSH username (optional)
-    PYATS_PASS      - Device SSH password (optional)
+    NETBOX_URL         - NetBox instance URL
+    NETBOX_TOKEN       - API token
+    DEVICE_USERNAME    - Device SSH username (optional)
+    DEVICE_PASSWORD    - Device SSH password (optional)
 """
 
 import argparse

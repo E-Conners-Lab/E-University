@@ -50,30 +50,30 @@ def generate_ipv6_config(device_name: str) -> list[str]:
     # Enable IPv6 unicast routing globally
     config_lines.append("ipv6 unicast-routing")
 
+    # Configure OSPFv3 process first (must exist before assigning to interfaces)
+    config_lines.append("ipv6 router ospf 1")
+    config_lines.append(f"router-id {device_data['loopback_ip']}")
+    config_lines.append("auto-cost reference-bandwidth 100000")
+    config_lines.append("passive-interface Loopback0")
+    config_lines.append("passive-interface GigabitEthernet1")
+    config_lines.append("log-adjacency-changes detail")
+    config_lines.append("exit")
+
     # Configure Loopback0 with IPv6
-    config_lines.append("!")
     config_lines.append("interface Loopback0")
-    config_lines.append(f" ipv6 address {loopback_ipv6}/128")
-    config_lines.append(" ipv6 ospf 1 area 0")
+    config_lines.append(f"ipv6 address {loopback_ipv6}/128")
+    config_lines.append("ipv6 ospf 1 area 0")
+    config_lines.append("exit")
 
     # Configure P2P interfaces with IPv6
     for intf in device_data.get("interfaces", []):
         ipv6_addr = intf.get("ipv6")
         if ipv6_addr:
-            config_lines.append("!")
             config_lines.append(f"interface {intf['name']}")
-            config_lines.append(f" ipv6 address {ipv6_addr}")
-            config_lines.append(" ipv6 ospf 1 area 0")
-            config_lines.append(" ipv6 ospf network point-to-point")
-
-    # Configure OSPFv3
-    config_lines.append("!")
-    config_lines.append("ipv6 router ospf 1")
-    config_lines.append(f" router-id {device_data['loopback_ip']}")
-    config_lines.append(" auto-cost reference-bandwidth 100000")
-    config_lines.append(" passive-interface Loopback0")
-    config_lines.append(" passive-interface GigabitEthernet1")
-    config_lines.append(" log-adjacency-changes detail")
+            config_lines.append(f"ipv6 address {ipv6_addr}")
+            config_lines.append("ipv6 ospf 1 area 0")
+            config_lines.append("ipv6 ospf network point-to-point")
+            config_lines.append("exit")
 
     # Configure BGP IPv6 address family
     bgp_neighbors_v6 = []
@@ -82,36 +82,34 @@ def generate_ipv6_config(device_name: str) -> list[str]:
             bgp_neighbors_v6.append(neighbor)
 
     if bgp_neighbors_v6:
-        config_lines.append("!")
         config_lines.append(f"router bgp {device_data['bgp_asn']}")
 
         # Add neighbors for IPv6 (same as IPv4 but for the ipv6 unicast AF)
         for neighbor in bgp_neighbors_v6:
-            config_lines.append(f" neighbor {neighbor['ipv6']} remote-as {neighbor['remote_as']}")
-            config_lines.append(f" neighbor {neighbor['ipv6']} update-source Loopback0")
-            config_lines.append(f" neighbor {neighbor['ipv6']} description {neighbor['description']} (IPv6)")
+            config_lines.append(f"neighbor {neighbor['ipv6']} remote-as {neighbor['remote_as']}")
+            config_lines.append(f"neighbor {neighbor['ipv6']} update-source Loopback0")
+            config_lines.append(f"neighbor {neighbor['ipv6']} description {neighbor['description']} IPv6")
 
         # IPv6 unicast address family
-        config_lines.append(" !")
-        config_lines.append(" address-family ipv6 unicast")
+        config_lines.append("address-family ipv6 unicast")
         for neighbor in bgp_neighbors_v6:
-            config_lines.append(f"  neighbor {neighbor['ipv6']} activate")
-            config_lines.append(f"  neighbor {neighbor['ipv6']} send-community both")
+            config_lines.append(f"neighbor {neighbor['ipv6']} activate")
+            config_lines.append(f"neighbor {neighbor['ipv6']} send-community both")
             # Route reflector clients
             if device_data.get("is_route_reflector"):
-                config_lines.append(f"  neighbor {neighbor['ipv6']} route-reflector-client")
-        config_lines.append(" exit-address-family")
+                config_lines.append(f"neighbor {neighbor['ipv6']} route-reflector-client")
+        config_lines.append("exit-address-family")
 
         # VPNv6 address family (uses IPv4 neighbor addresses for update-source loopback peering)
         if device_data.get("is_route_reflector") or device_data.get("vrfs"):
-            config_lines.append(" !")
-            config_lines.append(" address-family vpnv6 unicast")
+            config_lines.append("address-family vpnv6 unicast")
             for v4_neighbor in device_data.get("bgp_neighbors", []):
-                config_lines.append(f"  neighbor {v4_neighbor['ip']} activate")
-                config_lines.append(f"  neighbor {v4_neighbor['ip']} send-community extended")
+                config_lines.append(f"neighbor {v4_neighbor['ip']} activate")
+                config_lines.append(f"neighbor {v4_neighbor['ip']} send-community extended")
                 if device_data.get("is_route_reflector"):
-                    config_lines.append(f"  neighbor {v4_neighbor['ip']} route-reflector-client")
-            config_lines.append(" exit-address-family")
+                    config_lines.append(f"neighbor {v4_neighbor['ip']} route-reflector-client")
+            config_lines.append("exit-address-family")
+        config_lines.append("exit")
 
     # Configure VRF IPv6 address family on PE routers
     vrf_list = device_data.get("vrfs", [])
@@ -121,20 +119,20 @@ def generate_ipv6_config(device_name: str) -> list[str]:
             rt = vrf_data.get("rt", "65000:999")
 
             # Add IPv6 address family to VRF definition
-            config_lines.append("!")
             config_lines.append(f"vrf definition {vrf_name}")
-            config_lines.append(" address-family ipv6")
-            config_lines.append(f"  route-target import {rt}")
-            config_lines.append(f"  route-target export {rt}")
-            config_lines.append(" exit-address-family")
+            config_lines.append("address-family ipv6")
+            config_lines.append(f"route-target import {rt}")
+            config_lines.append(f"route-target export {rt}")
+            config_lines.append("exit-address-family")
+            config_lines.append("exit")
 
         # BGP VRF IPv6 address families
-        config_lines.append("!")
         config_lines.append(f"router bgp {device_data['bgp_asn']}")
         for vrf_name in vrf_list:
-            config_lines.append(f" address-family ipv6 vrf {vrf_name}")
-            config_lines.append("  redistribute connected")
-            config_lines.append(" exit-address-family")
+            config_lines.append(f"address-family ipv6 vrf {vrf_name}")
+            config_lines.append("redistribute connected")
+            config_lines.append("exit-address-family")
+        config_lines.append("exit")
 
     return config_lines
 

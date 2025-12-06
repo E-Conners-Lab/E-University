@@ -2,6 +2,10 @@
 .env
 .env.local
 .env.*.local
+!.env.example
+telemetry/.env
+telemetry/.env.local
+!telemetry/.env.example
 
 # Python
 __pycache__/
@@ -52,3 +56,4 @@ E-University-Baseline.zip
 
 # pyATS artifacts
 .pyats/
+configs/backups/

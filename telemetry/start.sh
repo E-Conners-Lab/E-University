@@ -16,12 +16,21 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Load environment variables from parent .env file
+# Load environment variables from parent .env file (device credentials)
 if [ -f "../.env" ]; then
-    echo -e "${GREEN}Loading credentials from ../.env${NC}"
+    echo -e "${GREEN}Loading device credentials from ../.env${NC}"
     export $(grep -v '^#' ../.env | xargs)
 else
     echo -e "${RED}Warning: ../.env not found. Set DEVICE_USERNAME, DEVICE_PASSWORD, DEVICE_ENABLE_PASSWORD manually.${NC}"
+fi
+
+# Load telemetry-specific environment variables
+if [ -f ".env" ]; then
+    echo -e "${GREEN}Loading telemetry credentials from .env${NC}"
+    export $(grep -v '^#' .env | xargs)
+else
+    echo -e "${RED}Warning: telemetry/.env not found. Copy .env.example to .env and configure credentials.${NC}"
+    exit 1
 fi
 
 case "${1:-}" in
@@ -40,9 +49,10 @@ case "${1:-}" in
         echo -e "${GREEN}Telemetry stack is starting!${NC}"
         echo ""
         echo "Services:"
-        echo "  - Grafana:  http://localhost:3001  (admin / euniv-grafana)"
-        echo "  - InfluxDB: http://localhost:8086  (admin / euniv-telemetry-2024)"
+        echo "  - Grafana:  http://localhost:3001  (user: ${GRAFANA_USER:-admin})"
+        echo "  - InfluxDB: http://localhost:8086  (user: ${INFLUXDB_USERNAME:-admin})"
         echo ""
+        echo "Credentials are configured in telemetry/.env"
         echo "Run './start.sh --logs collector' to watch collector output"
         ;;
     *)
@@ -52,9 +62,10 @@ case "${1:-}" in
         echo -e "${GREEN}Telemetry stack is starting!${NC}"
         echo ""
         echo "Services:"
-        echo "  - Grafana:  http://localhost:3001  (admin / euniv-grafana)"
-        echo "  - InfluxDB: http://localhost:8086  (admin / euniv-telemetry-2024)"
+        echo "  - Grafana:  http://localhost:3001  (user: ${GRAFANA_USER:-admin})"
+        echo "  - InfluxDB: http://localhost:8086  (user: ${INFLUXDB_USERNAME:-admin})"
         echo ""
+        echo "Credentials are configured in telemetry/.env"
         echo "First time? Run './start.sh --build' to build the collector image."
         echo "Run './start.sh --logs collector' to watch collector output"
         ;;

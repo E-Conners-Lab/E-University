@@ -41,10 +41,12 @@ Real-time network observability stack for the E-University lab environment.
 
 ## Access
 
-| Service  | URL                    | Credentials                    |
-|----------|------------------------|--------------------------------|
-| Grafana  | http://localhost:3001  | admin / euniv-grafana          |
-| InfluxDB | http://localhost:8086  | admin / euniv-telemetry-2024   |
+| Service  | URL                    | Credentials            |
+|----------|------------------------|------------------------|
+| Grafana  | http://localhost:3001  | See `.env` file        |
+| InfluxDB | http://localhost:8086  | See `.env` file        |
+
+**Note:** Copy `.env.example` to `.env` and configure your credentials before starting.
 
 ## Metrics Collected
 

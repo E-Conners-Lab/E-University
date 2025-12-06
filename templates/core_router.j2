@@ -67,6 +67,10 @@ interface {{ intf.name }}
  ip address {{ intf.ip }} {{ intf.mask }}
  ip ospf 1 area 0
  ip ospf network point-to-point
+{% if ospf_auth_key is defined and ospf_auth_key %}
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 {{ ospf_auth_key }}
+{% endif %}
 {% if intf.ipv6 is defined %}
  ipv6 address {{ intf.ipv6 }}
  ipv6 ospf 1 area 0
@@ -122,6 +126,9 @@ router bgp {{ bgp_asn }}
  neighbor {{ neighbor.ip }} remote-as {{ neighbor.remote_as }}
  neighbor {{ neighbor.ip }} update-source Loopback0
  neighbor {{ neighbor.ip }} description {{ neighbor.description }}
+{% if bgp_auth_key is defined and bgp_auth_key %}
+ neighbor {{ neighbor.ip }} password {{ bgp_auth_key }}
+{% endif %}
 {% endfor %}
 !
  address-family ipv4
@@ -151,6 +158,9 @@ router bgp {{ bgp_asn }}
  neighbor {{ neighbor.ipv6 }} remote-as {{ neighbor.remote_as }}
  neighbor {{ neighbor.ipv6 }} update-source Loopback0
  neighbor {{ neighbor.ipv6 }} description {{ neighbor.description }} (IPv6)
+{% if bgp_auth_key is defined and bgp_auth_key %}
+ neighbor {{ neighbor.ipv6 }} password {{ bgp_auth_key }}
+{% endif %}
 {% endif %}
 {% endfor %}
 !

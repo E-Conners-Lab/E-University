@@ -6,11 +6,11 @@ services:
       - "8086:8086"
     environment:
       - DOCKER_INFLUXDB_INIT_MODE=setup
-      - DOCKER_INFLUXDB_INIT_USERNAME=admin
-      - DOCKER_INFLUXDB_INIT_PASSWORD=euniv-telemetry-2024
-      - DOCKER_INFLUXDB_INIT_ORG=euniv
-      - DOCKER_INFLUXDB_INIT_BUCKET=network_telemetry
-      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=euniv-super-secret-token
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USERNAME}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
     volumes:
       - influxdb-data:/var/lib/influxdb2
     networks:
@@ -27,9 +27,10 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=euniv-grafana
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
@@ -47,9 +48,9 @@ services:
     container_name: euniv-collector
     environment:
       - INFLUXDB_URL=http://influxdb:8086
-      - INFLUXDB_TOKEN=euniv-super-secret-token
-      - INFLUXDB_ORG=euniv
-      - INFLUXDB_BUCKET=network_telemetry
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
       - DEVICE_USERNAME=${DEVICE_USERNAME}
       - DEVICE_PASSWORD=${DEVICE_PASSWORD}
       - DEVICE_ENABLE_PASSWORD=${DEVICE_ENABLE_PASSWORD}

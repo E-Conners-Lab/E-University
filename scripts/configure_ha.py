@@ -23,7 +23,11 @@ HSRP Groups by VRF:
 
 import os
 
+from dotenv import load_dotenv
 from genie.testbed import load
+
+# Load environment variables from .env file
+load_dotenv()
 
 # HSRP Configuration per campus
 # Format: {device_name: {vlan: (vrf, ip_address, virtual_ip, priority, is_preempt)}}
@@ -118,10 +122,7 @@ def build_hsrp_config(device_name: str) -> list:
 def configure_hsrp(testbed_file: str, dry_run: bool = False):
     """Configure HSRP on all PE devices."""
 
-    # Set credentials from environment or use defaults
-    os.environ.setdefault('DEVICE_USERNAME', 'admin')
-    os.environ.setdefault('DEVICE_PASSWORD', 'Pass2885!')
-    os.environ.setdefault('DEVICE_ENABLE_PASSWORD', 'Pass2885!')
+    # Credentials loaded from .env via dotenv
 
     print("Loading testbed...")
     testbed = load(testbed_file)
@@ -202,9 +203,7 @@ def configure_hsrp(testbed_file: str, dry_run: bool = False):
 def verify_hsrp(testbed_file: str):
     """Verify HSRP status on all PE devices."""
 
-    os.environ.setdefault('DEVICE_USERNAME', 'admin')
-    os.environ.setdefault('DEVICE_PASSWORD', 'Pass2885!')
-    os.environ.setdefault('DEVICE_ENABLE_PASSWORD', 'Pass2885!')
+    # Credentials loaded from .env via dotenv
 
     print("Loading testbed...")
     testbed = load(testbed_file)
