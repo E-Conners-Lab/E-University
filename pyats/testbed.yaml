@@ -92,7 +92,7 @@ devices:
   EUNIV-INET-GW2:
     connections:
       cli:
-        ip: 192.168.68.207
+        ip: 192.168.68.251
         protocol: ssh
       defaults:
         class: unicon.Unicon
