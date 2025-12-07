@@ -147,7 +147,6 @@ DEVICES = {
         "bgp_neighbors": [
             {"ip": "10.255.0.1", "ipv6": "2001:db8:e011::1", "remote_as": "65000", "description": "EUNIV-CORE1"},
             {"ip": "10.255.0.3", "ipv6": "2001:db8:e011::3", "remote_as": "65000", "description": "EUNIV-CORE3"},
-            {"ip": "10.255.0.4", "ipv6": "2001:db8:e011::4", "remote_as": "65000", "description": "EUNIV-CORE4"},
             {"ip": "10.255.0.5", "ipv6": "2001:db8:e011::5", "remote_as": "65000", "description": "EUNIV-CORE5"},
             {"ip": "10.255.0.102", "ipv6": "2001:db8:e011::102", "remote_as": "65000", "description": "EUNIV-INET-GW2"},
             {"ip": "10.255.1.1", "ipv6": "2001:db8:e011:1::1", "remote_as": "65000", "description": "EUNIV-MAIN-AGG1"},
@@ -209,7 +208,6 @@ DEVICES = {
         "bgp_neighbors": [
             {"ip": "10.255.0.1", "ipv6": "2001:db8:e011::1", "remote_as": "65000", "description": "EUNIV-CORE1"},
             {"ip": "10.255.0.2", "ipv6": "2001:db8:e011::2", "remote_as": "65000", "description": "EUNIV-CORE2"},
-            {"ip": "10.255.0.3", "ipv6": "2001:db8:e011::3", "remote_as": "65000", "description": "EUNIV-CORE3"},
             {"ip": "10.255.0.4", "ipv6": "2001:db8:e011::4", "remote_as": "65000", "description": "EUNIV-CORE4"},
             {"ip": "10.255.3.1", "ipv6": "2001:db8:e011:3::1", "remote_as": "65000", "description": "EUNIV-RES-AGG1"},
         ],
@@ -439,3 +437,536 @@ DEVICES = {
         "vrfs": ["STAFF-NET", "RESEARCH-NET", "GUEST-NET"],
     },
 }
+
+# =============================================================================
+# LAYER 2 SECURITY CONFIGURATION
+# =============================================================================
+
+# RADIUS Server Configuration
+RADIUS_CONFIG = {
+    "server_name": "EUNIV-RADIUS",
+    "server_ip": os.getenv("RADIUS_SERVER_IP", "192.168.68.69"),  # Docker host IP
+    "auth_port": 1812,
+    "acct_port": 1813,
+    "secret": os.getenv("RADIUS_SECRET", "euniv-radius-secret"),
+    "timeout": 5,
+    "retransmit": 3,
+}
+
+# VLAN Definitions for Access Switches
+L2_VLANS = {
+    10: {"name": "STAFF", "description": "Staff and faculty network", "vrf": "STAFF-NET"},
+    20: {"name": "RESEARCH", "description": "Research partner network", "vrf": "RESEARCH-NET"},
+    30: {"name": "MEDICAL", "description": "HIPAA medical network", "vrf": "MEDICAL-NET"},
+    40: {"name": "GUEST", "description": "Guest/visitor network", "vrf": "GUEST-NET"},
+    99: {"name": "MGMT", "description": "Switch management", "vrf": None},
+    100: {"name": "INFRA", "description": "Infrastructure (RADIUS, monitoring)", "vrf": None},
+}
+
+# L2 Security Settings
+L2_SECURITY = {
+    # DHCP Snooping
+    "dhcp_snooping_vlans": [10, 20, 30, 40],
+
+    # Dynamic ARP Inspection
+    "dai_vlans": [10, 20, 30, 40],
+
+    # Port Security
+    "port_security": {
+        "max_mac_addresses": 3,
+        "violation_action": "restrict",  # protect, restrict, or shutdown
+        "aging_time": 120,
+    },
+
+    # Storm Control (percentage thresholds)
+    "storm_control": {
+        "broadcast": 10.0,
+        "multicast": 10.0,
+        "unicast": 80.0,
+    },
+
+    # 802.1X Settings
+    "dot1x": {
+        "reauth_period": 3600,
+        "tx_period": 10,
+        "quiet_period": 60,
+        "host_mode": "multi-auth",  # single-host, multi-host, multi-domain, multi-auth
+    },
+}
+
+# Access Switch Definitions
+ACCESS_SWITCHES = {
+    "EUNIV-MED-ASW1": {
+        "role": "Medical Campus Access Switch",
+        "platform": "cat9k",
+        "mgmt_ip": "192.168.68.217",
+        "mgmt_interface": "GigabitEthernet0/0",
+        "campus": "medical",
+        "uplinks": [
+            {
+                "interface": "GigabitEthernet1/0/1",
+                "description": "Trunk to EUNIV-MED-EDGE1",
+                "mode": "trunk",
+                "allowed_vlans": "10,20,30,40,99,100",
+                "native_vlan": 99,
+            },
+            {
+                "interface": "GigabitEthernet1/0/2",
+                "description": "Trunk to EUNIV-MED-EDGE2",
+                "mode": "trunk",
+                "allowed_vlans": "10,20,30,40,99,100",
+                "native_vlan": 99,
+            },
+        ],
+        "access_ports": [
+            {
+                "interface": "GigabitEthernet1/0/3",
+                "description": "RADIUS Server",
+                "mode": "access",
+                "vlan": 100,
+                "dot1x": False,  # Static port for infrastructure
+            },
+            {
+                "interface": "GigabitEthernet1/0/4",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 10,  # Default VLAN before auth
+                "dot1x": True,
+            },
+            {
+                "interface": "GigabitEthernet1/0/5",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 10,
+                "dot1x": True,
+            },
+            {
+                "interface": "GigabitEthernet1/0/6",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 10,
+                "dot1x": True,
+            },
+            {
+                "interface": "GigabitEthernet1/0/7",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 10,
+                "dot1x": True,
+            },
+            {
+                "interface": "GigabitEthernet1/0/8",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 10,
+                "dot1x": True,
+            },
+        ],
+    },
+    # Main Campus Access Switch
+    "EUNIV-MAIN-ASW1": {
+        "role": "Main Campus Access Switch",
+        "platform": "cat9k",
+        "mgmt_ip": "192.168.68.253",
+        "mgmt_interface": "GigabitEthernet0/0",
+        "campus": "main",
+        "uplinks": [
+            {
+                "interface": "GigabitEthernet1/0/1",
+                "description": "Trunk to EUNIV-MAIN-EDGE1",
+                "mode": "trunk",
+                "allowed_vlans": "10,20,40,99,100",
+                "native_vlan": 99,
+            },
+            {
+                "interface": "GigabitEthernet1/0/2",
+                "description": "Trunk to EUNIV-MAIN-EDGE2",
+                "mode": "trunk",
+                "allowed_vlans": "10,20,40,99,100",
+                "native_vlan": 99,
+            },
+        ],
+        "access_ports": [
+            {
+                "interface": "GigabitEthernet1/0/3",
+                "description": "Infrastructure Port",
+                "mode": "access",
+                "vlan": 100,
+                "dot1x": False,
+            },
+            {
+                "interface": "GigabitEthernet1/0/4",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 10,
+                "dot1x": True,
+            },
+            {
+                "interface": "GigabitEthernet1/0/5",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 10,
+                "dot1x": True,
+            },
+            {
+                "interface": "GigabitEthernet1/0/6",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 10,
+                "dot1x": True,
+            },
+            {
+                "interface": "GigabitEthernet1/0/7",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 10,
+                "dot1x": True,
+            },
+            {
+                "interface": "GigabitEthernet1/0/8",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 10,
+                "dot1x": True,
+            },
+        ],
+    },
+    # Research Campus Access Switch
+    "EUNIV-RES-ASW1": {
+        "role": "Research Campus Access Switch",
+        "platform": "cat9k",
+        "mgmt_ip": "192.168.68.252",
+        "mgmt_interface": "GigabitEthernet0/0",
+        "campus": "research",
+        "uplinks": [
+            {
+                "interface": "GigabitEthernet1/0/1",
+                "description": "Trunk to EUNIV-RES-EDGE1",
+                "mode": "trunk",
+                "allowed_vlans": "10,20,40,99,100",
+                "native_vlan": 99,
+            },
+            {
+                "interface": "GigabitEthernet1/0/2",
+                "description": "Trunk to EUNIV-RES-EDGE2",
+                "mode": "trunk",
+                "allowed_vlans": "10,20,40,99,100",
+                "native_vlan": 99,
+            },
+        ],
+        "access_ports": [
+            {
+                "interface": "GigabitEthernet1/0/3",
+                "description": "Infrastructure Port",
+                "mode": "access",
+                "vlan": 100,
+                "dot1x": False,
+            },
+            {
+                "interface": "GigabitEthernet1/0/4",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 20,  # Default to RESEARCH VLAN
+                "dot1x": True,
+            },
+            {
+                "interface": "GigabitEthernet1/0/5",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 20,
+                "dot1x": True,
+            },
+            {
+                "interface": "GigabitEthernet1/0/6",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 20,
+                "dot1x": True,
+            },
+            {
+                "interface": "GigabitEthernet1/0/7",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 20,
+                "dot1x": True,
+            },
+            {
+                "interface": "GigabitEthernet1/0/8",
+                "description": "802.1X User Port",
+                "mode": "access",
+                "vlan": 20,
+                "dot1x": True,
+            },
+        ],
+    },
+}
+
+# =============================================================================
+# QoS CONFIGURATION (VRF-Based Marking)
+# =============================================================================
+
+# DSCP markings per VRF - traffic marked at PE ingress
+QOS_VRF_MARKINGS = {
+    "MEDICAL-NET": {
+        "dscp": "ef",           # DSCP 46 - Expedited Forwarding
+        "dscp_value": 46,
+        "description": "HIPAA critical medical applications",
+        "priority": 1,          # Highest priority
+        "bandwidth_percent": 20,  # Guaranteed bandwidth
+        "queue": "PRIORITY",
+    },
+    "STAFF-NET": {
+        "dscp": "af31",         # DSCP 26 - Assured Forwarding Class 3
+        "dscp_value": 26,
+        "description": "Business-critical staff applications",
+        "priority": 2,
+        "bandwidth_percent": 25,
+        "queue": "AF3",
+    },
+    "RESEARCH-NET": {
+        "dscp": "af21",         # DSCP 18 - Assured Forwarding Class 2
+        "dscp_value": 18,
+        "description": "Research data transfers and collaboration",
+        "priority": 3,
+        "bandwidth_percent": 30,  # Higher bandwidth for bulk transfers
+        "queue": "AF2",
+    },
+    "STUDENT-NET": {
+        "dscp": "default",      # DSCP 0 - Best Effort
+        "dscp_value": 0,
+        "description": "General student network traffic",
+        "priority": 4,
+        "bandwidth_percent": 20,
+        "queue": "BE",
+    },
+    "GUEST-NET": {
+        "dscp": "cs1",          # DSCP 8 - Scavenger/Bulk
+        "dscp_value": 8,
+        "description": "Guest/visitor low-priority traffic",
+        "priority": 5,          # Lowest priority
+        "bandwidth_percent": 5,
+        "queue": "SCAVENGER",
+    },
+}
+
+# QoS Class-Map definitions (used by policy-maps)
+QOS_CLASS_MAPS = {
+    "MEDICAL-TRAFFIC": {
+        "match_type": "match-any",
+        "match_criteria": [
+            {"type": "vrf", "value": "MEDICAL-NET"},
+            {"type": "dscp", "value": "ef"},
+        ],
+    },
+    "STAFF-TRAFFIC": {
+        "match_type": "match-any",
+        "match_criteria": [
+            {"type": "vrf", "value": "STAFF-NET"},
+            {"type": "dscp", "value": "af31"},
+        ],
+    },
+    "RESEARCH-TRAFFIC": {
+        "match_type": "match-any",
+        "match_criteria": [
+            {"type": "vrf", "value": "RESEARCH-NET"},
+            {"type": "dscp", "value": "af21"},
+        ],
+    },
+    "STUDENT-TRAFFIC": {
+        "match_type": "match-any",
+        "match_criteria": [
+            {"type": "vrf", "value": "STUDENT-NET"},
+            {"type": "dscp", "value": "default"},
+        ],
+    },
+    "GUEST-TRAFFIC": {
+        "match_type": "match-any",
+        "match_criteria": [
+            {"type": "vrf", "value": "GUEST-NET"},
+            {"type": "dscp", "value": "cs1"},
+        ],
+    },
+}
+
+# QoS Policy-Map definitions
+QOS_POLICY_MAPS = {
+    # Ingress marking policy (applied to VRF interfaces)
+    "EUNIV-VRF-MARKING": {
+        "description": "Mark traffic based on source VRF",
+        "direction": "input",
+        "classes": {
+            "MEDICAL-TRAFFIC": {"action": "set dscp ef", "police_rate": None},
+            "STAFF-TRAFFIC": {"action": "set dscp af31", "police_rate": None},
+            "RESEARCH-TRAFFIC": {"action": "set dscp af21", "police_rate": None},
+            "STUDENT-TRAFFIC": {"action": "set dscp default", "police_rate": None},
+            "GUEST-TRAFFIC": {"action": "set dscp cs1", "police_rate": "50m"},  # Rate limit guests
+        },
+    },
+    # Egress queuing policy (applied to uplinks)
+    "EUNIV-QOS-QUEUING": {
+        "description": "Queue traffic based on DSCP markings",
+        "direction": "output",
+        "classes": {
+            "MEDICAL-TRAFFIC": {"bandwidth_percent": 20, "priority": True},
+            "STAFF-TRAFFIC": {"bandwidth_percent": 25, "priority": False},
+            "RESEARCH-TRAFFIC": {"bandwidth_percent": 30, "priority": False},
+            "STUDENT-TRAFFIC": {"bandwidth_percent": 20, "priority": False},
+            "GUEST-TRAFFIC": {"bandwidth_percent": 5, "priority": False},
+        },
+    },
+}
+
+# Edge devices where QoS policies should be applied
+QOS_EDGE_DEVICES = [
+    "EUNIV-MAIN-EDGE1", "EUNIV-MAIN-EDGE2",
+    "EUNIV-MED-EDGE1", "EUNIV-MED-EDGE2",
+    "EUNIV-RES-EDGE1", "EUNIV-RES-EDGE2",
+]
+
+# VRFs per Edge device (which VRFs need marking on each device)
+QOS_EDGE_VRFS = {
+    "EUNIV-MAIN-EDGE1": ["STUDENT-NET", "STAFF-NET", "RESEARCH-NET", "GUEST-NET"],
+    "EUNIV-MAIN-EDGE2": ["STUDENT-NET", "STAFF-NET", "RESEARCH-NET", "GUEST-NET"],
+    "EUNIV-MED-EDGE1": ["STAFF-NET", "RESEARCH-NET", "MEDICAL-NET", "GUEST-NET"],
+    "EUNIV-MED-EDGE2": ["STAFF-NET", "RESEARCH-NET", "MEDICAL-NET", "GUEST-NET"],
+    "EUNIV-RES-EDGE1": ["STAFF-NET", "RESEARCH-NET", "GUEST-NET"],
+    "EUNIV-RES-EDGE2": ["STAFF-NET", "RESEARCH-NET", "GUEST-NET"],
+}
+
+# =============================================================================
+# ACCESS LAYER SVI CONFIGURATION (Edge Router Downstream Interfaces)
+# =============================================================================
+# These are the subinterfaces on Gi4 (downstream to access switches)
+# They provide the gateway for end users and run HSRP for redundancy
+
+# Interface facing access switches
+ACCESS_DOWNSTREAM_INTERFACE = "GigabitEthernet4"
+
+# DHCP Server for ip helper-address (Docker host)
+DHCP_SERVER_IP = os.getenv("DHCP_SERVER_IP", "192.168.68.69")
+
+# HSRP Configuration
+HSRP_CONFIG = {
+    "priority_active": 110,      # Priority for designated active router
+    "priority_standby": 100,     # Default priority (standby)
+    "hello_interval": 1,         # Fast hello timer (seconds)
+    "hold_time": 3,              # Fast hold timer (seconds)
+    "preempt": True,             # Enable preemption for failback
+    "version": 2,                # HSRP version 2 (recommended)
+}
+
+# Access Layer SVI Configuration per Campus
+# Maps VLAN ID to VRF and HSRP active router for load balancing
+ACCESS_LAYER_SVIS = {
+    "main": {
+        "edge1": "EUNIV-MAIN-EDGE1",
+        "edge2": "EUNIV-MAIN-EDGE2",
+        "subnet_prefix": "10.1",  # 10.1.VLAN.0/24
+        "vlans": {
+            10: {
+                "name": "STAFF",
+                "vrf": "STAFF-NET",
+                "hsrp_active": "edge1",  # EDGE1 is active for VLAN 10
+                "hsrp_group": 10,
+            },
+            20: {
+                "name": "RESEARCH",
+                "vrf": "RESEARCH-NET",
+                "hsrp_active": "edge2",  # EDGE2 is active for VLAN 20 (load balance)
+                "hsrp_group": 20,
+            },
+            40: {
+                "name": "GUEST",
+                "vrf": "GUEST-NET",
+                "hsrp_active": "edge1",  # EDGE1 is active for VLAN 40
+                "hsrp_group": 40,
+            },
+        },
+    },
+    "medical": {
+        "edge1": "EUNIV-MED-EDGE1",
+        "edge2": "EUNIV-MED-EDGE2",
+        "subnet_prefix": "10.2",  # 10.2.VLAN.0/24
+        "vlans": {
+            10: {
+                "name": "STAFF",
+                "vrf": "STAFF-NET",
+                "hsrp_active": "edge1",
+                "hsrp_group": 10,
+            },
+            20: {
+                "name": "RESEARCH",
+                "vrf": "RESEARCH-NET",
+                "hsrp_active": "edge2",
+                "hsrp_group": 20,
+            },
+            30: {
+                "name": "MEDICAL",
+                "vrf": "MEDICAL-NET",
+                "hsrp_active": "edge2",  # EDGE2 active for MEDICAL (critical traffic)
+                "hsrp_group": 30,
+            },
+            40: {
+                "name": "GUEST",
+                "vrf": "GUEST-NET",
+                "hsrp_active": "edge1",
+                "hsrp_group": 40,
+            },
+        },
+    },
+    "research": {
+        "edge1": "EUNIV-RES-EDGE1",
+        "edge2": "EUNIV-RES-EDGE2",
+        "subnet_prefix": "10.3",  # 10.3.VLAN.0/24
+        "vlans": {
+            10: {
+                "name": "STAFF",
+                "vrf": "STAFF-NET",
+                "hsrp_active": "edge1",
+                "hsrp_group": 10,
+            },
+            20: {
+                "name": "RESEARCH",
+                "vrf": "RESEARCH-NET",
+                "hsrp_active": "edge2",
+                "hsrp_group": 20,
+            },
+            40: {
+                "name": "GUEST",
+                "vrf": "GUEST-NET",
+                "hsrp_active": "edge1",
+                "hsrp_group": 40,
+            },
+        },
+    },
+}
+
+
+def get_svi_ip(campus: str, vlan_id: int, router: str) -> str:
+    """
+    Calculate IP address for an access layer SVI.
+
+    Addressing scheme:
+    - HSRP VIP:  <prefix>.<vlan>.1  (e.g., 10.1.10.1)
+    - EDGE1:     <prefix>.<vlan>.2  (e.g., 10.1.10.2)
+    - EDGE2:     <prefix>.<vlan>.3  (e.g., 10.1.10.3)
+
+    Args:
+        campus: Campus name (main, medical, research)
+        vlan_id: VLAN ID (10, 20, 30, 40)
+        router: "vip", "edge1", or "edge2"
+
+    Returns:
+        IP address string
+    """
+    config = ACCESS_LAYER_SVIS[campus]
+    prefix = config["subnet_prefix"]
+
+    if router == "vip":
+        return f"{prefix}.{vlan_id}.1"
+    elif router == "edge1":
+        return f"{prefix}.{vlan_id}.2"
+    elif router == "edge2":
+        return f"{prefix}.{vlan_id}.3"
+    else:
+        raise ValueError(f"Unknown router type: {router}")

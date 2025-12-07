@@ -158,9 +158,9 @@ class IPv6InterfaceValidation(aetest.Testcase):
                         step.failed("IPv6 not enabled on Loopback0")
                         continue
 
-                    # Check if expected address is present
-                    # Address format: 2001:db8:euniv::1/128
-                    if expected_loopback in output:
+                    # Check if expected address is present (case-insensitive)
+                    # Address format: 2001:db8:e011::1/128
+                    if expected_loopback.lower() in output.lower():
                         step.passed(f"Loopback0 has {expected_loopback}")
                     else:
                         step.failed(f"Expected {expected_loopback}/128 not found")

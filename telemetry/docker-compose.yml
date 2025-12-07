@@ -65,7 +65,33 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  freeradius:
+    image: freeradius/freeradius-server:latest
+    container_name: euniv-radius
+    ports:
+      - "1812:1812/udp"
+      - "1813:1813/udp"
+    volumes:
+      - ./freeradius/clients.conf:/etc/raddb/clients.conf:ro
+      - ./freeradius/authorize:/etc/raddb/mods-config/files/authorize:ro
+    networks:
+      - telemetry-net
+    command: -X
+
+  dnsmasq:
+    image: strm/dnsmasq:latest
+    container_name: euniv-dhcp
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf:ro
+      - dnsmasq-leases:/var/lib/misc
+    command: ["--conf-file=/etc/dnsmasq.conf", "--keep-in-foreground", "--log-facility=-"]
+    restart: unless-stopped
+
 volumes:
+  dnsmasq-leases:
   influxdb-data:
   grafana-data:
 

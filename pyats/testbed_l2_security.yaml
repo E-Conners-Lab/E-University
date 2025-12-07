@@ -1,4 +1,7 @@
 devices:
+  # =============================================================================
+  # CORE ROUTERS
+  # =============================================================================
   EUNIV-CORE1:
     connections:
       cli:
@@ -74,6 +77,10 @@ devices:
         password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
+
+  # =============================================================================
+  # INTERNET GATEWAYS
+  # =============================================================================
   EUNIV-INET-GW1:
     connections:
       cli:
@@ -104,6 +111,10 @@ devices:
         password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
+
+  # =============================================================================
+  # MAIN CAMPUS
+  # =============================================================================
   EUNIV-MAIN-AGG1:
     connections:
       cli:
@@ -153,6 +164,7 @@ devices:
         password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
+  # --- Main Campus Access Switch (Cat 9kv) ---
   EUNIV-MAIN-ASW1:
     connections:
       cli:
@@ -171,6 +183,10 @@ devices:
     os: iosxe
     platform: cat9k
     type: switch
+
+  # =============================================================================
+  # MEDICAL CAMPUS
+  # =============================================================================
   EUNIV-MED-AGG1:
     connections:
       cli:
@@ -220,6 +236,29 @@ devices:
         password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
+  # --- NEW: Medical Campus Access Switch (Cat 9kv) ---
+  EUNIV-MED-ASW1:
+    connections:
+      cli:
+        ip: 192.168.68.217
+        protocol: ssh
+        arguments:
+          learn_hostname: True
+      defaults:
+        class: unicon.Unicon
+    credentials:
+      default:
+        password: "%ENV{DEVICE_PASSWORD}"
+        username: "%ENV{DEVICE_USERNAME}"
+      enable:
+        password: "%ENV{DEVICE_ENABLE_PASSWORD}"
+    os: iosxe
+    platform: cat9k
+    type: switch
+
+  # =============================================================================
+  # RESEARCH CAMPUS
+  # =============================================================================
   EUNIV-RES-AGG1:
     connections:
       cli:
@@ -269,6 +308,7 @@ devices:
         password: "%ENV{DEVICE_ENABLE_PASSWORD}"
     os: iosxe
     type: router
+  # --- Research Campus Access Switch (Cat 9kv) ---
   EUNIV-RES-ASW1:
     connections:
       cli:

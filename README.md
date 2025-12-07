@@ -1,8 +1,8 @@
 
 # E-University Network Design Document
 
-**Document Version:** 1.0
-**Date:** November 27, 2025
+**Document Version:** 3.1
+**Date:** December 7, 2025
 **Author:** Network Engineering Team
 **Classification:** Internal Use
 
@@ -18,12 +18,14 @@
 6. [Routing Design](#6-routing-design)
 7. [MPLS Design](#7-mpls-design)
 8. [VRF Design](#8-vrf-design)
-9. [Configuration Standards](#9-configuration-standards)
-10. [Management & Monitoring](#10-management--monitoring)
-11. [Streaming Telemetry](#11-streaming-telemetry)
-12. [Security Design](#12-security-design)
-13. [Automation Framework](#13-automation-framework)
-14. [Appendix](#14-appendix)
+9. [Layer 2 Security](#9-layer-2-security)
+10. [Quality of Service (QoS)](#10-quality-of-service-qos)
+11. [Configuration Standards](#11-configuration-standards)
+12. [Management & Monitoring](#12-management--monitoring)
+13. [Streaming Telemetry](#13-streaming-telemetry)
+14. [Security Design](#14-security-design)
+15. [Automation Framework](#15-automation-framework)
+16. [Appendix](#16-appendix)
 
 ---
 
@@ -126,6 +128,7 @@ This document defines the network architecture for E-University, a multi-campus 
 | EUNIV-RES-AGG1 | Research Campus Aggregation | 10.255.3.1 | 192.168.68.214 | 65000 | CSR1000V |
 | EUNIV-RES-EDGE1 | Research Campus Edge | 10.255.3.11 | 192.168.68.215 | 65000 | CSR1000V |
 | EUNIV-RES-EDGE2 | Research Campus Edge | 10.255.3.12 | 192.168.68.216 | 65000 | CSR1000V |
+| EUNIV-MED-ASW1 | Medical Campus Access Switch | N/A | 192.168.68.217 | N/A | Cat9kv |
 
 ### 3.2 Host Router Inventory
 
@@ -594,68 +597,468 @@ vrf definition STUDENT-NET
 - **STUDENT-NET**: CGNAT enabled for IPv4 address conservation
 - **GUEST-NET**: Internet-only access, no internal resources
 
-### 8.5 VRF Internet Access Configuration
+### 8.5 VRF Internet Access via INET-GW
 
-HOST devices in VRFs require internet access for updates, NTP, and external connectivity. This is implemented via **NAT on EDGE routers** using the management interface as the outside interface.
+VRF internet access is provided through a centralized design using the **INET-GW routers** as the single egress point for all VRF traffic. This architecture provides:
+- Centralized NAT management on 2 routers instead of 6
+- Proper MPLS L3VPN traffic flow through the core
+- Consistent security policy enforcement at the edge
 
-#### Production Approach (MP-BGP Route Leaking)
+#### Architecture
 
-In a production environment, internet access for VRFs would be handled via MP-BGP:
+```
+                     ┌─────────────────────────────────────┐
+                     │           INTERNET                  │
+                     └───────────────┬─────────────────────┘
+                                     │
+                           ┌─────────┴─────────┐
+                           │   INET-GW1/GW2    │
+                           │   VRF-aware NAT   │
+                           │   PAT on Gi1      │
+                           └─────────┬─────────┘
+                                     │ BGP VPNv4
+                                     │ default-information originate
+                           ┌─────────┴─────────┐
+                           │     MPLS Core     │
+                           │   (Label Switch)  │
+                           └─────────┬─────────┘
+                                     │
+        ┌────────────────────────────┼────────────────────────────┐
+        │                            │                            │
+   MAIN-EDGE1/2               MED-EDGE1/2                   RES-EDGE1/2
+   (VRF learned                (VRF learned                (VRF learned
+    0.0.0.0/0 via BGP)          0.0.0.0/0 via BGP)          0.0.0.0/0 via BGP)
+```
 
-1. **INET-GW routers** advertise the default route with a specific route-target
-2. **EDGE routers** import the default route into customer VRFs via route-target
+#### INET-GW NAT Configuration
+
+```
+! NAT ACL covers all VRF prefixes
+ip access-list standard VRF-NAT-ACL
+ permit 10.1.0.0 0.0.255.255
+ permit 10.2.0.0 0.0.255.255
+ permit 10.3.0.0 0.0.255.255
+
+! VRF-aware NAT for each VRF
+ip nat inside source list VRF-NAT-ACL interface GigabitEthernet1 vrf STAFF-NET overload
+ip nat inside source list VRF-NAT-ACL interface GigabitEthernet1 vrf RESEARCH-NET overload
+ip nat inside source list VRF-NAT-ACL interface GigabitEthernet1 vrf MEDICAL-NET overload
+ip nat inside source list VRF-NAT-ACL interface GigabitEthernet1 vrf GUEST-NET overload
+
+! Static default route per VRF to gateway
+ip route vrf STAFF-NET 0.0.0.0 0.0.0.0 192.168.68.1
+ip route vrf RESEARCH-NET 0.0.0.0 0.0.0.0 192.168.68.1
+ip route vrf MEDICAL-NET 0.0.0.0 0.0.0.0 192.168.68.1
+ip route vrf GUEST-NET 0.0.0.0 0.0.0.0 192.168.68.1
+```
+
+#### BGP Default Route Origination
 
 ```
 ! On INET-GW1/GW2 - Advertise default to VRFs
 router bgp 65000
- address-family vpnv4
-  neighbor 10.255.0.1 send-community extended
- !
  address-family ipv4 vrf STAFF-NET
-  redistribute static
+  default-information originate
+ address-family ipv4 vrf RESEARCH-NET
+  default-information originate
+ address-family ipv4 vrf MEDICAL-NET
+  default-information originate
+ address-family ipv4 vrf GUEST-NET
   default-information originate
 ```
 
-#### Lab Implementation (Static Route + NAT)
+#### Validation
 
-For this EVE-NG lab environment, internet access is provided via static routes and NAT on each EDGE router:
+```bash
+# Verify NAT translations on INET-GW
+show ip nat translations
+show ip nat statistics
 
-```
-! Default route in VRF pointing to management gateway
-ip route vrf STAFF-NET 0.0.0.0 0.0.0.0 GigabitEthernet1 192.168.68.1
+# Verify VRF default route learned on Edge routers
+show ip route vrf STAFF-NET 0.0.0.0
 
-! NAT configuration for internal networks
-ip access-list standard STAFF-NET-NAT
- permit 172.18.0.0 0.0.255.255
- permit 172.16.0.0 0.0.255.255
- permit 172.17.0.0 0.0.255.255
-
-ip nat inside source list STAFF-NET-NAT interface GigabitEthernet1 vrf STAFF-NET overload
-
-! Interface NAT designations
-interface GigabitEthernet6
- ip nat inside
-!
-interface GigabitEthernet1
- ip nat outside
+# Test internet connectivity from Edge router
+ping vrf STAFF-NET 8.8.8.8 source 10.1.10.2
 ```
 
-#### EDGE Router Internet Configuration Status
+### 8.6 Access Layer SVI Design
 
-| Router | Management IP | VRF | NAT Inside Interface | Status |
-|--------|---------------|-----|---------------------|--------|
-| RES-EDGE1 | 192.168.68.215 | STAFF-NET | Gi6 | Configured |
-| RES-EDGE2 | 192.168.68.216 | STAFF-NET | Gi6 | Configured |
-| MAIN-EDGE1 | 192.168.68.209 | STAFF-NET | Gi4 | Configured |
-| MAIN-EDGE2 | 192.168.68.210 | STAFF-NET | Gi6 | Configured |
-| MED-EDGE1 | 192.168.68.212 | STAFF-NET | Gi6 | Configured |
-| MED-EDGE2 | 192.168.68.213 | STAFF-NET | Gi6 | Configured |
+Edge routers provide Layer 3 gateway services for campus VLANs via **GigabitEthernet4 subinterfaces** with HSRP for gateway redundancy.
+
+#### Architecture
+
+```
+                    EDGE1 ◄─── Gi3 (HSRP heartbeat) ───► EDGE2
+                      │                                    │
+                    Gi4.10 (VLAN 10)                   Gi4.10 (VLAN 10)
+                    Gi4.20 (VLAN 20)                   Gi4.20 (VLAN 20)
+                    Gi4.30 (VLAN 30)                   Gi4.30 (VLAN 30)
+                    Gi4.40 (VLAN 40)                   Gi4.40 (VLAN 40)
+                      │                                    │
+                      └─────────► Access Switch ◄──────────┘
+                                  (802.1Q trunk)
+```
+
+#### VLAN to VRF Mapping
+
+| VLAN | Name | VRF | IP Range per Campus |
+|------|------|-----|---------------------|
+| 10 | STAFF | STAFF-NET | 10.{campus}.10.0/24 |
+| 20 | RESEARCH | RESEARCH-NET | 10.{campus}.20.0/24 |
+| 30 | MEDICAL | MEDICAL-NET | 10.{campus}.30.0/24 (Medical only) |
+| 40 | GUEST | GUEST-NET | 10.{campus}.40.0/24 |
+
+Campus codes: Main=1, Medical=2, Research=3
+
+#### SVI Configuration with HSRP
+
+```
+! Main Campus EDGE1 - STAFF VLAN
+interface GigabitEthernet4.10
+ description STAFF VLAN Gateway
+ encapsulation dot1Q 10
+ vrf forwarding STAFF-NET
+ ip address 10.1.10.2 255.255.255.0
+ standby version 2
+ standby 10 ip 10.1.10.1
+ standby 10 priority 150
+ standby 10 preempt delay minimum 30
+ standby 10 timers 1 3
+
+! Main Campus EDGE2 - STAFF VLAN (standby)
+interface GigabitEthernet4.10
+ description STAFF VLAN Gateway
+ encapsulation dot1Q 10
+ vrf forwarding STAFF-NET
+ ip address 10.1.10.3 255.255.255.0
+ standby version 2
+ standby 10 ip 10.1.10.1
+ standby 10 priority 100
+ standby 10 preempt delay minimum 30
+ standby 10 timers 1 3
+```
+
+#### HSRP Load Balancing
+
+| VLANs | Active Router | Priority |
+|-------|---------------|----------|
+| 10 (STAFF), 30 (MEDICAL) | EDGE1 | 150 |
+| 20 (RESEARCH), 40 (GUEST) | EDGE2 | 150 |
+
+### 8.7 Centralized DHCP Services
+
+DHCP services are provided by a centralized **dnsmasq server** running in Docker, with DHCP relay configured on Edge routers.
+
+#### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     Docker Host (192.168.68.57)                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                     dnsmasq container                        │   │
+│  │   - DHCP server for all campus VLANs                        │   │
+│  │   - DNS forwarder (8.8.8.8, 8.8.4.4)                        │   │
+│  │   - Ports: UDP 67, 68                                        │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ DHCP Relay
+        ┌───────────────────────────┼───────────────────────────┐
+        │                           │                           │
+   MAIN-EDGE1/2               MED-EDGE1/2                RES-EDGE1/2
+   ip helper-address          ip helper-address          ip helper-address
+   192.168.68.57              192.168.68.57              192.168.68.57
+```
+
+#### DHCP Pool Definitions
+
+| Campus | VLAN | Range | Lease | Domain |
+|--------|------|-------|-------|--------|
+| Main | 10 (STAFF) | 10.1.10.100-200 | 12h | staff.main.euniv.lab |
+| Main | 20 (RESEARCH) | 10.1.20.100-200 | 12h | research.main.euniv.lab |
+| Main | 40 (GUEST) | 10.1.40.100-200 | 2h | guest.main.euniv.lab |
+| Medical | 10 (STAFF) | 10.2.10.100-200 | 12h | staff.medical.euniv.lab |
+| Medical | 20 (RESEARCH) | 10.2.20.100-200 | 12h | research.medical.euniv.lab |
+| Medical | 30 (MEDICAL) | 10.2.30.100-200 | 12h | medical.euniv.lab |
+| Medical | 40 (GUEST) | 10.2.40.100-200 | 2h | guest.medical.euniv.lab |
+| Research | 10 (STAFF) | 10.3.10.100-200 | 12h | staff.research.euniv.lab |
+| Research | 20 (RESEARCH) | 10.3.20.100-200 | 12h | research.research.euniv.lab |
+| Research | 40 (GUEST) | 10.3.40.100-200 | 2h | guest.research.euniv.lab |
+
+#### Edge Router DHCP Relay Configuration
+
+```
+interface GigabitEthernet4.10
+ ip helper-address 192.168.68.57
+```
+
+#### dnsmasq Configuration Location
+
+Configuration file: `telemetry/dnsmasq/dnsmasq.conf`
+
+```bash
+# Start DHCP server
+cd telemetry
+docker compose up -d dnsmasq
+
+# View DHCP logs
+docker logs -f euniv-dhcp
+```
 
 ---
 
-## 9. Configuration Standards
+## 9. Layer 2 Security
 
-### 9.1 Base Configuration Template
+Enterprise-grade Layer 2 security is deployed on access switches to provide defense-in-depth at the network edge.
+
+### 9.1 Access Switch Inventory
+
+| Switch | Campus | Management IP | Platform | Uplinks |
+|--------|--------|---------------|----------|---------|
+| EUNIV-MED-ASW1 | Medical | 192.168.68.217 | Cat9kv | Gi1/0/1-2 to MED-EDGE1/2 |
+
+### 9.2 VLAN Configuration
+
+| VLAN ID | Name | Purpose | VRF |
+|---------|------|---------|-----|
+| 10 | STAFF | Staff and faculty | STAFF-NET |
+| 20 | RESEARCH | Research partners | RESEARCH-NET |
+| 30 | MEDICAL | HIPAA medical | MEDICAL-NET |
+| 40 | GUEST | Guest/visitor | GUEST-NET |
+| 99 | MGMT | Switch management | - |
+| 100 | INFRA | Infrastructure (RADIUS) | - |
+
+### 9.3 Security Features Deployed
+
+| Feature | Purpose | Configuration |
+|---------|---------|---------------|
+| **802.1X** | Port-based authentication | RADIUS with dynamic VLAN assignment |
+| **DHCP Snooping** | Prevent rogue DHCP servers | Enabled on VLANs 10, 20, 30, 40 |
+| **Dynamic ARP Inspection** | Prevent ARP spoofing | Enabled on VLANs 10, 20, 30, 40 |
+| **Port Security** | MAC address limits | Max 3 MACs, restrict violation |
+| **BPDU Guard** | STP attack prevention | Enabled on access ports |
+| **PortFast** | Fast edge port convergence | Enabled on access ports |
+| **Storm Control** | Broadcast/multicast limiting | 10% threshold |
+| **IP Source Guard** | IP spoofing prevention | Requires DHCP snooping binding |
+
+### 9.4 Trunk Port Configuration
+
+Uplink trunk ports (Gi1/0/1, Gi1/0/2) are configured with:
+- Native VLAN 99 (non-default for security)
+- Allowed VLANs: 10, 20, 30, 40, 99, 100
+- DHCP Snooping trusted
+- DAI trusted
+- Root Guard enabled
+
+### 9.5 Access Port Configuration
+
+User-facing access ports are configured with:
+- 802.1X authentication (ports 4-8)
+- Port security with MAC limiting
+- BPDU Guard / PortFast
+- Storm control thresholds
+- IP Source Guard
+
+### 9.6 802.1X / RADIUS Configuration
+
+```
+aaa new-model
+aaa authentication dot1x default group RADIUS-SERVERS
+aaa authorization network default group RADIUS-SERVERS
+dot1x system-auth-control
+
+radius server EUNIV-RADIUS
+  address ipv4 192.168.68.69 auth-port 1812 acct-port 1813
+  key <secret>
+```
+
+RADIUS provides dynamic VLAN assignment based on user credentials:
+- Staff users → VLAN 10
+- Research users → VLAN 20
+- Medical users → VLAN 30
+- Guest users → VLAN 40
+
+### 9.7 L2 Security Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/configure_l2_security.py` | Deploy L2 security config to access switches |
+| `pyats/tests/test_l2_security.py` | Validate L2 security configuration (27 tests) |
+
+**Usage:**
+```bash
+# Dry-run to preview configuration
+python scripts/configure_l2_security.py --switch EUNIV-MED-ASW1 --dry-run
+
+# Deploy configuration
+python scripts/configure_l2_security.py --switch EUNIV-MED-ASW1
+
+# Run validation tests
+source .env
+pytest pyats/tests/test_l2_security.py -v
+```
+
+### 9.8 Validation Test Categories
+
+| Category | Tests | Description |
+|----------|-------|-------------|
+| VLAN Configuration | 2 | Verify VLANs exist with correct names |
+| Trunk Configuration | 3 | Verify trunk mode, allowed VLANs, native VLAN |
+| 802.1X Configuration | 6 | AAA, RADIUS, dot1x on access ports |
+| DHCP Snooping | 3 | Global enable, VLAN config, trusted ports |
+| Dynamic ARP Inspection | 2 | VLAN config, trusted ports |
+| Port Security | 2 | Enabled status, MAC limits |
+| STP Protection | 3 | BPDU Guard, PortFast, Root Guard |
+| Storm Control | 2 | Configuration and thresholds |
+| RADIUS Connectivity | 2 | Server reachability, AAA status |
+| IP Source Guard | 1 | Configuration status |
+| Security Baseline | 1 | Overall security posture |
+
+---
+
+## 10. Quality of Service (QoS)
+
+Enterprise-class QoS is deployed on Edge routers to provide differentiated services for various traffic types across VRFs.
+
+### 10.1 QoS Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              QoS Policy Flow                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Ingress (VRF interfaces)              Egress (WAN interfaces)              │
+│  ┌─────────────────────┐               ┌─────────────────────┐              │
+│  │  EUNIV-VRF-MARKING  │───────────────│  EUNIV-QOS-QUEUING  │              │
+│  │                     │               │                     │              │
+│  │  - Match VRF        │               │  - Priority Queue   │              │
+│  │  - Set DSCP         │               │  - CBWFQ            │              │
+│  │  - Mark traffic     │               │  - Fair Queue       │              │
+│  └─────────────────────┘               └─────────────────────┘              │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 10.2 Traffic Classification
+
+Traffic is classified and marked based on VRF membership:
+
+| VRF | Traffic Type | DSCP Value | PHB | Queue |
+|-----|-------------|------------|-----|-------|
+| MEDICAL-NET | Critical Healthcare | EF (46) | Expedited Forwarding | Priority (LLQ) |
+| RESEARCH-NET | Research Data | AF31 (26) | Assured Forwarding 3 | Bandwidth 30% |
+| STAFF-NET | Business Apps | AF21 (18) | Assured Forwarding 2 | Bandwidth 20% |
+| GUEST-NET | Best Effort | CS1 (8) | Scavenger | Fair Queue |
+
+### 10.3 Marking Policy (Ingress)
+
+```
+! Class definitions by VRF
+class-map match-all MEDICAL-TRAFFIC
+ match vrf MEDICAL-NET
+class-map match-all RESEARCH-TRAFFIC
+ match vrf RESEARCH-NET
+class-map match-all STAFF-TRAFFIC
+ match vrf STAFF-NET
+class-map match-all GUEST-TRAFFIC
+ match vrf GUEST-NET
+
+! Marking policy
+policy-map EUNIV-VRF-MARKING
+ class MEDICAL-TRAFFIC
+  set dscp ef
+ class RESEARCH-TRAFFIC
+  set dscp af31
+ class STAFF-TRAFFIC
+  set dscp af21
+ class GUEST-TRAFFIC
+  set dscp cs1
+ class class-default
+  set dscp default
+```
+
+### 10.4 Queuing Policy (Egress)
+
+```
+! Queuing classes
+class-map match-any VOICE-VIDEO
+ match dscp ef
+ match dscp af41
+class-map match-any CRITICAL-DATA
+ match dscp af31
+ match dscp af32
+ match dscp af33
+class-map match-any BUSINESS
+ match dscp af21
+ match dscp af22
+ match dscp af23
+class-map match-any SCAVENGER
+ match dscp cs1
+
+! Hierarchical queuing policy
+policy-map EUNIV-QOS-QUEUING
+ class VOICE-VIDEO
+  priority percent 20
+ class CRITICAL-DATA
+  bandwidth percent 30
+ class BUSINESS
+  bandwidth percent 20
+ class SCAVENGER
+  bandwidth percent 5
+  random-detect dscp-based
+ class class-default
+  fair-queue
+```
+
+### 10.5 Policy Application
+
+```
+! Apply to VRF subinterfaces (ingress marking)
+interface GigabitEthernet4.10
+ service-policy input EUNIV-VRF-MARKING
+
+interface GigabitEthernet4.20
+ service-policy input EUNIV-VRF-MARKING
+
+interface GigabitEthernet4.30
+ service-policy input EUNIV-VRF-MARKING
+
+interface GigabitEthernet4.40
+ service-policy input EUNIV-VRF-MARKING
+
+! Apply to WAN interface (egress queuing)
+interface GigabitEthernet2
+ service-policy output EUNIV-QOS-QUEUING
+```
+
+### 10.6 QoS Validation
+
+```bash
+# Verify policy application
+show policy-map interface GigabitEthernet4.10
+show policy-map interface GigabitEthernet2
+
+# Check DSCP counters
+show policy-map interface GigabitEthernet4.10 | include packets
+
+# Run pyATS QoS validation
+cd pyats
+pyats run job qos_job.py --testbed-file testbed.yaml
+```
+
+### 10.7 QoS Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/configure_qos.py` | Deploy QoS policies to Edge routers |
+| `pyats/tests/qos_aetest.py` | Validate QoS configuration |
+| `pyats/qos_job.py` | pyATS job for QoS testing |
+
+---
+
+## 11. Configuration Standards
+
+### 11.1 Base Configuration Template
 
 All devices include these standard configurations:
 
@@ -690,7 +1093,7 @@ snmp-server location E University Data Center
 snmp-server contact noc@euniv.edu
 ```
 
-### 9.2 Interface Naming Convention
+### 10.2 Interface Naming Convention
 
 | Interface | Purpose |
 |-----------|---------|
@@ -698,7 +1101,7 @@ snmp-server contact noc@euniv.edu
 | GigabitEthernet2-6 | Core/Uplink connections |
 | Loopback0 | Router-ID, BGP source |
 
-### 9.3 Description Standards
+### 10.3 Description Standards
 
 ```
 interface GigabitEthernet2
@@ -709,9 +1112,9 @@ Format: `To <PEER-HOSTNAME>`
 
 ---
 
-## 10. Management & Monitoring
+## 12. Management & Monitoring
 
-### 10.1 Management Network
+### 12.1 Management Network
 
 | Parameter | Value |
 |-----------|-------|
@@ -719,14 +1122,14 @@ Format: `To <PEER-HOSTNAME>`
 | Gateway | 192.168.68.1 |
 | VLAN | Native (untagged) |
 
-### 10.2 NTP Configuration
+### 11.2 NTP Configuration
 
 | Server | IP Address |
 |--------|------------|
 | Primary | 10.255.255.10 |
 | Secondary | 10.255.255.11 |
 
-### 10.3 SNMP Configuration
+### 11.3 SNMP Configuration
 
 | Parameter | Value |
 |-----------|-------|
@@ -734,7 +1137,7 @@ Format: `To <PEER-HOSTNAME>`
 | Location | E University Data Center |
 | Contact | noc@euniv.edu |
 
-### 10.4 Syslog Configuration
+### 11.4 Syslog Configuration
 
 | Parameter | Value |
 |-----------|-------|
@@ -743,11 +1146,11 @@ Format: `To <PEER-HOSTNAME>`
 
 ---
 
-## 11. Streaming Telemetry
+## 13. Streaming Telemetry
 
 Real-time network observability using a containerized telemetry stack.
 
-### 11.1 Architecture
+### 13.1 Architecture
 
 ```
 ┌─────────────────┐    SSH/CLI     ┌─────────────────┐
@@ -768,7 +1171,7 @@ Real-time network observability using a containerized telemetry stack.
                                   └─────────────────┘
 ```
 
-### 11.2 Stack Components
+### 12.2 Stack Components
 
 | Component | Container | Port | Purpose |
 |-----------|-----------|------|---------|
@@ -776,7 +1179,7 @@ Real-time network observability using a containerized telemetry stack.
 | **Grafana 10.2** | `euniv-grafana` | 3001 | Visualization dashboards |
 | **Collector** | `euniv-collector` | - | Python/Netmiko polling |
 
-### 11.3 Metrics Collected
+### 12.3 Metrics Collected
 
 | Category | Metrics | Collection Interval |
 |----------|---------|---------------------|
@@ -787,7 +1190,7 @@ Real-time network observability using a containerized telemetry stack.
 | **BFD** | Sessions up/down count | 30s |
 | **HSRP** | Active/Standby state per group (11 groups) | 30s |
 
-### 11.4 Quick Start
+### 12.4 Quick Start
 
 ```bash
 cd telemetry
@@ -805,14 +1208,14 @@ cd telemetry
 ./start.sh --stop
 ```
 
-### 11.5 Access URLs
+### 12.5 Access URLs
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
 | Grafana | http://localhost:3001 | See `telemetry/.env` |
 | InfluxDB | http://localhost:8086 | See `telemetry/.env` |
 
-### 11.6 Grafana Dashboard Panels
+### 12.6 Grafana Dashboard Panels
 
 The pre-configured dashboard (`network-overview.json`) includes:
 - Device reachability status grid (UP/DOWN per device)
@@ -823,9 +1226,9 @@ The pre-configured dashboard (`network-overview.json`) includes:
 
 ---
 
-## 12. Security Design
+## 14. Security Design
 
-### 12.1 VTY Access Control
+### 14.1 VTY Access Control
 
 ```
 ip access-list standard VTY-ACCESS
@@ -840,7 +1243,7 @@ line vty 0 15
  exec-timeout 30 0
 ```
 
-### 12.2 Credential Management
+### 13.2 Credential Management
 
 | Account | Purpose | Privilege |
 |---------|---------|-----------|
@@ -858,7 +1261,7 @@ vim .env
 
 The pyATS testbed files use `%ENV{VAR_NAME}` syntax to reference credentials from the environment.
 
-### 12.3 Secure Credential Wrappers
+### 13.3 Secure Credential Wrappers
 
 For production-grade security, wrapper scripts load credentials from **macOS Keychain** instead of environment files:
 
@@ -882,7 +1285,7 @@ The wrapper scripts (`pyats/run.sh`, `scripts/run.sh`) automatically:
 2. Export them as environment variables
 3. Execute the specified script
 
-### 12.4 SSH Configuration
+### 13.4 SSH Configuration
 
 - SSH Version 2 only
 - RSA key: 2048 bits
@@ -890,15 +1293,15 @@ The wrapper scripts (`pyats/run.sh`, `scripts/run.sh`) automatically:
 
 ---
 
-## 13. Automation Framework
+## 15. Automation Framework
 
-### 13.1 Source of Truth
+### 15.1 Source of Truth
 
 **NetBox** (Cloud-hosted)
 - URL: https://'<your-netbox-website-address>'
 - Contains: Device inventory, IPs, connections, custom fields
 
-### 13.2 Configuration Pipeline
+### 14.2 Configuration Pipeline
 
 ```
 ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
@@ -907,7 +1310,7 @@ The wrapper scripts (`pyats/run.sh`, `scripts/run.sh`) automatically:
 └──────────┘     └──────────┘     └──────────┘     └──────────┘
 ```
 
-### 13.3 Automation Scripts
+### 14.3 Automation Scripts
 
 #### Core Scripts
 
@@ -1017,7 +1420,7 @@ python orchestrate.py --generate-only
 python orchestrate.py --validate-only
 ```
 
-### 13.4 Validation Tests
+### 14.4 Validation Tests
 
 | Test | Description |
 |------|-------------|
@@ -1030,7 +1433,7 @@ python orchestrate.py --validate-only
 | BFD | All BFD neighbors up with correct timers |
 | Internet | Gateway reachability and BGP to upstream |
 
-### 13.5 NetBox Integration
+### 14.5 NetBox Integration
 
 Populate NetBox with device inventory using:
 
@@ -1045,7 +1448,7 @@ python netbox/populate_euniv.py --cleanup
 python netbox/populate_euniv.py --verify
 ```
 
-### 13.6 EVE-NG Lab Integration
+### 14.6 EVE-NG Lab Integration
 
 The project includes complete EVE-NG lab configurations:
 
@@ -1072,9 +1475,9 @@ python eve-ng/generate_full_configs.py
 
 ---
 
-## 14. Appendix
+## 16. Appendix
 
-### 14.1 Verification Commands
+### 16.1 Verification Commands
 
 ```bash
 # OSPF
@@ -1101,7 +1504,7 @@ show bfd neighbors
 show bfd neighbors detail
 ```
 
-### 14.2 Troubleshooting Checklist
+### 15.2 Troubleshooting Checklist
 
 1. **No OSPF Neighbors**
    - Check physical connectivity
@@ -1124,7 +1527,7 @@ show bfd neighbors detail
    - Confirm OSPF neighbor is FULL (BFD requires OSPF)
    - Check for hardware/platform BFD support
 
-### 14.3 Document Revision History
+### 15.3 Document Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
@@ -1143,6 +1546,7 @@ show bfd neighbors detail
 | 2.2 | 2025-12-03 | Network Team | Added shutdown_unused_interfaces.py script to admin shutdown Gi4 on EDGE devices (unused interfaces causing false alerts). Fixed CPU metric collection in network-monitor for CSR1000V (uses SNMP index .7 instead of .1). Added interactive D3.js topology map to network-monitor frontend. |
 | 2.3 | 2025-12-05 | Network Team | Fixed pyATS credential loading - added load_dotenv() to euniv_job.py for automatic .env file loading. Added device health monitoring job and tests. Code style cleanup across all scripts. |
 | 3.0 | 2025-12-05 | Network Team | Added streaming telemetry stack (Grafana + InfluxDB + Python collector) for real-time network observability. Implemented HSRP gateway redundancy across all 3 campuses with load balancing (11 groups). Added pyATS HSRP validation tests. Created secure credential wrappers using macOS Keychain. Added chaos testing and IPv6 deployment scripts. |
+| 3.1 | 2025-12-07 | Network Team | Implemented centralized VRF internet access via INET-GW with VRF-aware NAT. Added Access Layer SVI design with HSRP on Gi4 subinterfaces. Deployed centralized DHCP services via dnsmasq container. Added QoS section with VRF-based traffic classification and hierarchical queuing. Created inet_gw_aetest.py for NAT/VRF connectivity validation. |
 
 ---
 

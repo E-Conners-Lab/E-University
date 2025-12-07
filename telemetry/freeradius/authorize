@@ -1,0 +1,59 @@
+# E-University RADIUS Users Configuration
+# Format: username Cleartext-Password := "password", Reply-Attributes
+
+# =============================================================================
+# STAFF USERS - Assigned to VLAN 10 (STAFF-NET)
+# =============================================================================
+staff1    Cleartext-Password := "staff123"
+          Tunnel-Type = VLAN,
+          Tunnel-Medium-Type = IEEE-802,
+          Tunnel-Private-Group-Id = "10"
+
+staff2    Cleartext-Password := "staff123"
+          Tunnel-Type = VLAN,
+          Tunnel-Medium-Type = IEEE-802,
+          Tunnel-Private-Group-Id = "10"
+
+# =============================================================================
+# RESEARCH USERS - Assigned to VLAN 20 (RESEARCH-NET)
+# =============================================================================
+researcher1    Cleartext-Password := "research123"
+               Tunnel-Type = VLAN,
+               Tunnel-Medium-Type = IEEE-802,
+               Tunnel-Private-Group-Id = "20"
+
+researcher2    Cleartext-Password := "research123"
+               Tunnel-Type = VLAN,
+               Tunnel-Medium-Type = IEEE-802,
+               Tunnel-Private-Group-Id = "20"
+
+# =============================================================================
+# MEDICAL USERS - Assigned to VLAN 30 (MEDICAL-NET / HIPAA)
+# =============================================================================
+doctor1    Cleartext-Password := "medical123"
+           Tunnel-Type = VLAN,
+           Tunnel-Medium-Type = IEEE-802,
+           Tunnel-Private-Group-Id = "30"
+
+nurse1     Cleartext-Password := "medical123"
+           Tunnel-Type = VLAN,
+           Tunnel-Medium-Type = IEEE-802,
+           Tunnel-Private-Group-Id = "30"
+
+# =============================================================================
+# GUEST USERS - Assigned to VLAN 40 (GUEST-NET)
+# =============================================================================
+guest1    Cleartext-Password := "guest123"
+          Tunnel-Type = VLAN,
+          Tunnel-Medium-Type = IEEE-802,
+          Tunnel-Private-Group-Id = "40"
+
+guest2    Cleartext-Password := "guest123"
+          Tunnel-Type = VLAN,
+          Tunnel-Medium-Type = IEEE-802,
+          Tunnel-Private-Group-Id = "40"
+
+# =============================================================================
+# TEST/ADMIN USER - For testing authentication without VLAN assignment
+# =============================================================================
+testuser    Cleartext-Password := "testpass"
