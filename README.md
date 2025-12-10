@@ -10,6 +10,7 @@
 
 ## Table of Contents
 
+- [Quick Start](#quick-start)
 1. [Executive Summary](#1-executive-summary)
 2. [Network Architecture Overview](#2-network-architecture-overview)
 3. [Device Inventory](#3-device-inventory)
@@ -26,6 +27,73 @@
 14. [Security Design](#14-security-design)
 15. [Automation Framework](#15-automation-framework)
 16. [Appendix](#16-appendix)
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- **Python 3.10+**
+- **EVE-NG or GNS3** with the lab topology running
+- Network devices accessible via SSH on the management network (192.168.68.0/22)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/E-Conners-Lab/E-University.git
+cd E-University
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On macOS/Linux
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Environment Setup
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env with your credentials
+# Required: DEVICE_USERNAME, DEVICE_PASSWORD, DEVICE_ENABLE_PASSWORD
+```
+
+### Verify Connectivity
+
+```bash
+# Test device connectivity with pyATS
+python -c "from pyats.topology import loader; tb = loader.load('testbed.yaml'); print('Testbed loaded:', tb.name)"
+
+# Run L3VPN verification
+python verify_l3vpn.py
+
+# Run BFD verification
+python verify_bfd.py
+```
+
+### Project Structure
+
+```
+.
+├── configs/              # Generated device configurations
+├── eve-ng/               # EVE-NG lab files
+├── netbox/               # NetBox integration scripts
+├── pyats/                # pyATS test jobs and scripts
+├── scripts/              # Utility and automation scripts
+├── telemetry/            # Streaming telemetry stack (TIG)
+├── templates/            # Jinja2 configuration templates
+├── testbed.yaml          # pyATS device inventory
+├── requirements.txt      # Python dependencies
+├── .env.example          # Environment variable template
+├── deploy_*.py           # Deployment scripts
+├── verify_*.py           # Verification scripts
+└── traffic_test*.py      # Traffic testing scripts
+```
 
 ---
 
