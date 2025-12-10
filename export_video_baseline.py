@@ -21,6 +21,7 @@ import os
 import zipfile
 from datetime import datetime
 
+import yaml
 from dotenv import load_dotenv
 from netmiko import ConnectHandler
 
@@ -31,25 +32,45 @@ USERNAME = os.getenv("DEVICE_USERNAME", "admin")
 PASSWORD = os.getenv("DEVICE_PASSWORD")
 OUTPUT_DIR = "E-University-Baseline"
 
-# All 16 devices with EVE-NG positioning
-DEVICES = {
-    "EUNIV-CORE1": {"ip": "192.168.68.200", "id": 1, "x": 400, "y": 150, "role": "Route Reflector"},
-    "EUNIV-CORE2": {"ip": "192.168.68.202", "id": 2, "x": 400, "y": 300, "role": "Route Reflector"},
-    "EUNIV-CORE3": {"ip": "192.168.68.203", "id": 3, "x": 550, "y": 225, "role": "P Router"},
-    "EUNIV-CORE4": {"ip": "192.168.68.204", "id": 4, "x": 700, "y": 225, "role": "P Router"},
-    "EUNIV-CORE5": {"ip": "192.168.68.205", "id": 5, "x": 850, "y": 225, "role": "P Router"},
-    "EUNIV-INET-GW1": {"ip": "192.168.68.206", "id": 6, "x": 300, "y": 50, "role": "Internet Gateway (Primary)"},
-    "EUNIV-INET-GW2": {"ip": "192.168.68.207", "id": 7, "x": 500, "y": 50, "role": "Internet Gateway (Backup)"},
-    "EUNIV-MAIN-AGG1": {"ip": "192.168.68.208", "id": 8, "x": 475, "y": 400, "role": "Main Campus Aggregation"},
-    "EUNIV-MAIN-PE1": {"ip": "192.168.68.209", "id": 9, "x": 425, "y": 500, "role": "Main Campus PE"},
-    "EUNIV-MAIN-PE2": {"ip": "192.168.68.210", "id": 10, "x": 525, "y": 500, "role": "Main Campus PE"},
-    "EUNIV-MED-AGG1": {"ip": "192.168.68.211", "id": 11, "x": 675, "y": 400, "role": "Medical Campus Aggregation"},
-    "EUNIV-MED-PE1": {"ip": "192.168.68.212", "id": 12, "x": 625, "y": 500, "role": "Medical Campus PE"},
-    "EUNIV-MED-PE2": {"ip": "192.168.68.213", "id": 13, "x": 725, "y": 500, "role": "Medical Campus PE"},
-    "EUNIV-RES-AGG1": {"ip": "192.168.68.214", "id": 14, "x": 875, "y": 400, "role": "Research Campus Aggregation"},
-    "EUNIV-RES-PE1": {"ip": "192.168.68.215", "id": 15, "x": 825, "y": 500, "role": "Research Campus PE"},
-    "EUNIV-RES-PE2": {"ip": "192.168.68.216", "id": 16, "x": 925, "y": 500, "role": "Research Campus PE"},
+# Path to testbed file (relative to script location)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+TESTBED_FILE = os.path.join(SCRIPT_DIR, "testbed.yaml")
+
+# EVE-NG visualization metadata (id, x, y, role) - separate from connection IPs
+DEVICE_METADATA = {
+    "EUNIV-CORE1": {"id": 1, "x": 400, "y": 150, "role": "Route Reflector"},
+    "EUNIV-CORE2": {"id": 2, "x": 400, "y": 300, "role": "Route Reflector"},
+    "EUNIV-CORE3": {"id": 3, "x": 550, "y": 225, "role": "P Router"},
+    "EUNIV-CORE4": {"id": 4, "x": 700, "y": 225, "role": "P Router"},
+    "EUNIV-CORE5": {"id": 5, "x": 850, "y": 225, "role": "P Router"},
+    "EUNIV-INET-GW1": {"id": 6, "x": 300, "y": 50, "role": "Internet Gateway (Primary)"},
+    "EUNIV-INET-GW2": {"id": 7, "x": 500, "y": 50, "role": "Internet Gateway (Backup)"},
+    "EUNIV-MAIN-AGG1": {"id": 8, "x": 475, "y": 400, "role": "Main Campus Aggregation"},
+    "EUNIV-MAIN-PE1": {"id": 9, "x": 425, "y": 500, "role": "Main Campus PE"},
+    "EUNIV-MAIN-PE2": {"id": 10, "x": 525, "y": 500, "role": "Main Campus PE"},
+    "EUNIV-MED-AGG1": {"id": 11, "x": 675, "y": 400, "role": "Medical Campus Aggregation"},
+    "EUNIV-MED-PE1": {"id": 12, "x": 625, "y": 500, "role": "Medical Campus PE"},
+    "EUNIV-MED-PE2": {"id": 13, "x": 725, "y": 500, "role": "Medical Campus PE"},
+    "EUNIV-RES-AGG1": {"id": 14, "x": 875, "y": 400, "role": "Research Campus Aggregation"},
+    "EUNIV-RES-PE1": {"id": 15, "x": 825, "y": 500, "role": "Research Campus PE"},
+    "EUNIV-RES-PE2": {"id": 16, "x": 925, "y": 500, "role": "Research Campus PE"},
 }
+
+def load_devices_from_testbed():
+    """Load device IPs from testbed.yaml and merge with visualization metadata"""
+    with open(TESTBED_FILE, 'r') as f:
+        testbed = yaml.safe_load(f)
+
+    devices = {}
+    for device_name, metadata in DEVICE_METADATA.items():
+        if device_name in testbed.get("devices", {}):
+            device_info = testbed["devices"][device_name]
+            ip = device_info.get("connections", {}).get("ssh", {}).get("ip")
+            if ip:
+                devices[device_name] = {"ip": ip, **metadata}
+    return devices
+
+DEVICES = load_devices_from_testbed()
 
 
 def connect(name, ip):

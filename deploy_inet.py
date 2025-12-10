@@ -3,7 +3,7 @@
 E-University Network - Internet Gateway Deployment
 Configures INET-GW1 and INET-GW2 with BGP for internet connectivity
 
-Run: python3 deploy_internet.py
+Run: python3 deploy_inet.py
 """
 
 import os
@@ -15,57 +15,9 @@ from pyats.topology import loader
 # Load environment variables
 load_dotenv()
 
-TESTBED = """
-testbed:
-  name: E-University-Internet
-  credentials:
-    default:
-      username: "%ENV{{DEVICE_USERNAME}}"
-      password: "%ENV{{DEVICE_PASSWORD}}"
-    enable:
-      password: "%ENV{{DEVICE_ENABLE_PASSWORD}}"
-
-devices:
-  EUNIV-CORE1:
-    os: iosxe
-    type: router
-    connections:
-      defaults:
-        class: unicon.Unicon
-      cli:
-        protocol: ssh
-        ip: 192.168.68.200
-
-  EUNIV-CORE2:
-    os: iosxe
-    type: router
-    connections:
-      defaults:
-        class: unicon.Unicon
-      cli:
-        protocol: ssh
-        ip: 192.168.68.202
-
-  EUNIV-INET-GW1:
-    os: iosxe
-    type: router
-    connections:
-      defaults:
-        class: unicon.Unicon
-      cli:
-        protocol: ssh
-        ip: 192.168.68.206
-
-  EUNIV-INET-GW2:
-    os: iosxe
-    type: router
-    connections:
-      defaults:
-        class: unicon.Unicon
-      cli:
-        protocol: ssh
-        ip: 192.168.68.207
-"""
+# Path to testbed file (relative to script location)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+TESTBED_FILE = os.path.join(SCRIPT_DIR, "testbed.yaml")
 
 # Configuration for each router
 CONFIGS = {
@@ -200,21 +152,12 @@ router bgp 65000
 
 
 def main():
-    import tempfile
-
     print("=" * 70)
     print("E-UNIVERSITY - INTERNET GATEWAY DEPLOYMENT")
     print("=" * 70)
 
-    # Write testbed to temp file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-        f.write(TESTBED)
-        testbed_file = f.name
-
-    try:
-        testbed = loader.load(testbed_file)
-    finally:
-        os.unlink(testbed_file)
+    # Load testbed from file
+    testbed = loader.load(TESTBED_FILE)
 
     # Deploy order matters - RRs first, then INET-GWs
     deploy_order = ["EUNIV-CORE1", "EUNIV-CORE2", "EUNIV-INET-GW1", "EUNIV-INET-GW2"]

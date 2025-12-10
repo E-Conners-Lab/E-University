@@ -22,6 +22,7 @@ import os
 import re
 import time
 
+import yaml
 from dotenv import load_dotenv
 from netmiko import ConnectHandler
 
@@ -31,13 +32,37 @@ load_dotenv()
 USERNAME = os.getenv("DEVICE_USERNAME", "admin")
 PASSWORD = os.getenv("DEVICE_PASSWORD")
 
-DEVICES = {
-    "CORE1": {"ip": "192.168.68.200", "loopback": "10.255.0.1"},
-    "CORE2": {"ip": "192.168.68.202", "loopback": "10.255.0.2"},
-    "MAIN-PE1": {"ip": "192.168.68.209", "loopback": "10.255.1.11"},
-    "MED-PE1": {"ip": "192.168.68.212", "loopback": "10.255.2.11"},
-    "RES-PE1": {"ip": "192.168.68.215", "loopback": "10.255.3.11"},
-}
+# Path to testbed file (relative to script location)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+TESTBED_FILE = os.path.join(SCRIPT_DIR, "testbed.yaml")
+
+# Load device IPs from testbed.yaml
+def load_devices_from_testbed():
+    """Load device connection info from testbed.yaml"""
+    with open(TESTBED_FILE, 'r') as f:
+        testbed = yaml.safe_load(f)
+
+    # Map short names to testbed names and extract IPs
+    device_mapping = {
+        "CORE1": ("EUNIV-CORE1", "10.255.0.1"),
+        "CORE2": ("EUNIV-CORE2", "10.255.0.2"),
+        "MAIN-PE1": ("EUNIV-MAIN-EDGE1", "10.255.1.11"),
+        "MED-PE1": ("EUNIV-MED-EDGE1", "10.255.2.11"),
+        "RES-PE1": ("EUNIV-RES-EDGE1", "10.255.3.11"),
+    }
+
+    devices = {}
+    for short_name, (testbed_name, loopback) in device_mapping.items():
+        if testbed_name in testbed.get("devices", {}):
+            device_info = testbed["devices"][testbed_name]
+            # Get IP from ssh connection
+            ip = device_info.get("connections", {}).get("ssh", {}).get("ip")
+            if ip:
+                devices[short_name] = {"ip": ip, "loopback": loopback}
+
+    return devices
+
+DEVICES = load_devices_from_testbed()
 
 # Colors
 RED = "\033[91m"

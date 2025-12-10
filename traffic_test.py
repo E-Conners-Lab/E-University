@@ -37,51 +37,45 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Optional
 
+import yaml
 from dotenv import load_dotenv
 from netmiko import ConnectHandler
 
 # Load environment variables
 load_dotenv()
 
-# Host configuration (matches deploy_host_switches.py)
-HOSTS = {
-    "HOST1": {
-        "mgmt_ip": "192.168.68.55",
-        "host_ip": "172.18.1.10",
-        "campus": "research",
-        "edge_router": "EUNIV-RES-EDGE1",
-    },
-    "HOST2": {
-        "mgmt_ip": "192.168.68.74",
-        "host_ip": "172.18.2.10",
-        "campus": "research",
-        "edge_router": "EUNIV-RES-EDGE2",
-    },
-    "HOST3": {
-        "mgmt_ip": "192.168.68.77",
-        "host_ip": "172.16.1.10",
-        "campus": "main",
-        "edge_router": "EUNIV-MAIN-EDGE1",
-    },
-    "HOST4": {
-        "mgmt_ip": "192.168.68.78",
-        "host_ip": "172.16.2.10",
-        "campus": "main",
-        "edge_router": "EUNIV-MAIN-EDGE2",
-    },
-    "HOST5": {
-        "mgmt_ip": "192.168.68.79",
-        "host_ip": "172.17.2.10",
-        "campus": "medical",
-        "edge_router": "EUNIV-MED-EDGE2",
-    },
-    "HOST6": {
-        "mgmt_ip": "192.168.68.80",
-        "host_ip": "172.17.1.10",
-        "campus": "medical",
-        "edge_router": "EUNIV-MED-EDGE1",
-    },
+# Path to testbed file (relative to script location)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+TESTBED_FILE = os.path.join(SCRIPT_DIR, "testbed.yaml")
+
+# Host network design parameters (host_ip, campus, edge_router are fixed by design)
+HOST_CONFIG = {
+    "HOST1": {"host_ip": "172.18.1.10", "campus": "research", "edge_router": "EUNIV-RES-EDGE1"},
+    "HOST2": {"host_ip": "172.18.2.10", "campus": "research", "edge_router": "EUNIV-RES-EDGE2"},
+    "HOST3": {"host_ip": "172.16.1.10", "campus": "main", "edge_router": "EUNIV-MAIN-EDGE1"},
+    "HOST4": {"host_ip": "172.16.2.10", "campus": "main", "edge_router": "EUNIV-MAIN-EDGE2"},
+    "HOST5": {"host_ip": "172.17.2.10", "campus": "medical", "edge_router": "EUNIV-MED-EDGE2"},
+    "HOST6": {"host_ip": "172.17.1.10", "campus": "medical", "edge_router": "EUNIV-MED-EDGE1"},
 }
+
+def load_hosts_from_testbed():
+    """Load host management IPs from testbed.yaml and merge with config"""
+    with open(TESTBED_FILE, 'r') as f:
+        testbed = yaml.safe_load(f)
+
+    hosts = {}
+    for host_name, config in HOST_CONFIG.items():
+        if host_name in testbed.get("devices", {}):
+            device_info = testbed["devices"][host_name]
+            mgmt_ip = device_info.get("connections", {}).get("ssh", {}).get("ip")
+            if mgmt_ip:
+                hosts[host_name] = {
+                    "mgmt_ip": mgmt_ip,
+                    **config
+                }
+    return hosts
+
+HOSTS = load_hosts_from_testbed()
 
 CREDENTIALS = {
     "username": os.getenv("DEVICE_USERNAME", "admin"),
