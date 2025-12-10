@@ -1161,7 +1161,7 @@ snmp-server location E University Data Center
 snmp-server contact noc@euniv.edu
 ```
 
-### 10.2 Interface Naming Convention
+### 11.2 Interface Naming Convention
 
 | Interface | Purpose |
 |-----------|---------|
@@ -1169,7 +1169,7 @@ snmp-server contact noc@euniv.edu
 | GigabitEthernet2-6 | Core/Uplink connections |
 | Loopback0 | Router-ID, BGP source |
 
-### 10.3 Description Standards
+### 11.3 Description Standards
 
 ```
 interface GigabitEthernet2
@@ -1190,14 +1190,14 @@ Format: `To <PEER-HOSTNAME>`
 | Gateway | 192.168.68.1 |
 | VLAN | Native (untagged) |
 
-### 11.2 NTP Configuration
+### 12.2 NTP Configuration
 
 | Server | IP Address |
 |--------|------------|
 | Primary | 10.255.255.10 |
 | Secondary | 10.255.255.11 |
 
-### 11.3 SNMP Configuration
+### 12.3 SNMP Configuration
 
 | Parameter | Value |
 |-----------|-------|
@@ -1205,7 +1205,7 @@ Format: `To <PEER-HOSTNAME>`
 | Location | E University Data Center |
 | Contact | noc@euniv.edu |
 
-### 11.4 Syslog Configuration
+### 12.4 Syslog Configuration
 
 | Parameter | Value |
 |-----------|-------|
@@ -1239,7 +1239,7 @@ Real-time network observability using a containerized telemetry stack.
                                   └─────────────────┘
 ```
 
-### 12.2 Stack Components
+### 13.2 Stack Components
 
 | Component | Container | Port | Purpose |
 |-----------|-----------|------|---------|
@@ -1247,7 +1247,7 @@ Real-time network observability using a containerized telemetry stack.
 | **Grafana 10.2** | `euniv-grafana` | 3001 | Visualization dashboards |
 | **Collector** | `euniv-collector` | - | Python/Netmiko polling |
 
-### 12.3 Metrics Collected
+### 13.3 Metrics Collected
 
 | Category | Metrics | Collection Interval |
 |----------|---------|---------------------|
@@ -1258,7 +1258,7 @@ Real-time network observability using a containerized telemetry stack.
 | **BFD** | Sessions up/down count | 30s |
 | **HSRP** | Active/Standby state per group (11 groups) | 30s |
 
-### 12.4 Quick Start
+### 13.4 Quick Start
 
 ```bash
 cd telemetry
@@ -1276,14 +1276,14 @@ cd telemetry
 ./start.sh --stop
 ```
 
-### 12.5 Access URLs
+### 13.5 Access URLs
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
 | Grafana | http://localhost:3001 | See `telemetry/.env` |
 | InfluxDB | http://localhost:8086 | See `telemetry/.env` |
 
-### 12.6 Grafana Dashboard Panels
+### 13.6 Grafana Dashboard Panels
 
 The pre-configured dashboard (`network-overview.json`) includes:
 - Device reachability status grid (UP/DOWN per device)
@@ -1311,7 +1311,7 @@ line vty 0 15
  exec-timeout 30 0
 ```
 
-### 13.2 Credential Management
+### 14.2 Credential Management
 
 | Account | Purpose | Privilege |
 |---------|---------|-----------|
@@ -1329,7 +1329,7 @@ vim .env
 
 The pyATS testbed files use `%ENV{VAR_NAME}` syntax to reference credentials from the environment.
 
-### 13.3 Secure Credential Wrappers
+### 14.3 Secure Credential Wrappers
 
 For production-grade security, wrapper scripts load credentials from **macOS Keychain** instead of environment files:
 
@@ -1353,7 +1353,7 @@ The wrapper scripts (`pyats/run.sh`, `scripts/run.sh`) automatically:
 2. Export them as environment variables
 3. Execute the specified script
 
-### 13.4 SSH Configuration
+### 14.4 SSH Configuration
 
 - SSH Version 2 only
 - RSA key: 2048 bits
@@ -1369,7 +1369,7 @@ The wrapper scripts (`pyats/run.sh`, `scripts/run.sh`) automatically:
 - URL: https://'<your-netbox-website-address>'
 - Contains: Device inventory, IPs, connections, custom fields
 
-### 14.2 Configuration Pipeline
+### 15.2 Configuration Pipeline
 
 ```
 ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
@@ -1378,7 +1378,7 @@ The wrapper scripts (`pyats/run.sh`, `scripts/run.sh`) automatically:
 └──────────┘     └──────────┘     └──────────┘     └──────────┘
 ```
 
-### 14.3 Automation Scripts
+### 15.3 Automation Scripts
 
 #### Core Scripts
 
@@ -1488,7 +1488,7 @@ python orchestrate.py --generate-only
 python orchestrate.py --validate-only
 ```
 
-### 14.4 Validation Tests
+### 15.4 Validation Tests
 
 | Test | Description |
 |------|-------------|
@@ -1501,7 +1501,7 @@ python orchestrate.py --validate-only
 | BFD | All BFD neighbors up with correct timers |
 | Internet | Gateway reachability and BGP to upstream |
 
-### 14.5 NetBox Integration
+### 15.5 NetBox Integration
 
 Populate NetBox with device inventory using:
 
@@ -1516,7 +1516,7 @@ python netbox/populate_euniv.py --cleanup
 python netbox/populate_euniv.py --verify
 ```
 
-### 14.6 EVE-NG Lab Integration
+### 15.6 EVE-NG Lab Integration
 
 The project includes complete EVE-NG lab configurations:
 
@@ -1572,7 +1572,7 @@ show bfd neighbors
 show bfd neighbors detail
 ```
 
-### 15.2 Troubleshooting Checklist
+### 16.2 Troubleshooting Checklist
 
 1. **No OSPF Neighbors**
    - Check physical connectivity
@@ -1595,7 +1595,7 @@ show bfd neighbors detail
    - Confirm OSPF neighbor is FULL (BFD requires OSPF)
    - Check for hardware/platform BFD support
 
-### 15.3 Document Revision History
+### 16.3 Document Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
