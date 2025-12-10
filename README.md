@@ -10,7 +10,7 @@
 
 ## Table of Contents
 
-- [Quick Start](#quick-start)
+0. [Quick Start](#quick-start)
 1. [Executive Summary](#1-executive-summary)
 2. [Network Architecture Overview](#2-network-architecture-overview)
 3. [Device Inventory](#3-device-inventory)
